@@ -9,3 +9,6 @@ Install playwright browser
 node_modules: the folder where playwright and all other dependencies are installed
 tests: the folder of tests
 package.json: the dependancy file with info about the application (like pom.xml in maven projects)
+
+=== First Test ===
+UIBasicTest.spec.js
