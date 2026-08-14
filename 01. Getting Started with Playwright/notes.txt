@@ -1,0 +1,11 @@
+=== Project Setup ===
+Initialize a new project with playwright: npm init playwright
+Choose Javascript as programming language
+Choose test to put end-to-end tests
+Add github actions workflow? true
+Install playwright browser
+
+=== Project Structure ===
+node_modules: the folder where playwright and all other dependencies are installed
+tests: the folder of tests
+package.json: the dependancy file with info about the application (like pom.xml in maven projects)
