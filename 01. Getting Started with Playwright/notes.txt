@@ -12,3 +12,12 @@ package.json: the dependancy file with info about the application (like pom.xml 
 
 === First Test ===
 UIBasicTest.spec.js
+// import @playwright/test annotation from playwright module
+// run a new test case
+// test(): takes two arguments (the title of the test and the test function)
+// testing in js is not sequential that's why we need to use the "async" and "await" keywords to wait until the previous set is completed - example
+// step 1 - open browser
+// step 2 - enter username and password
+// step 3 - click submit button
+
+=== Brwoser Context & Page Fixtures ===
