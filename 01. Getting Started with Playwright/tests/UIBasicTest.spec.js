@@ -1,4 +1,4 @@
-import { test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 test("Browser Context Playwright Test", async ({ browser }) => {
     // Browser context options can include proxies, cookies, permissions, etc.
@@ -12,17 +12,24 @@ test("Browser Context Playwright Test", async ({ browser }) => {
 
     // Navigate to the specified URL.
     // Here, the browser context and page are created explicitly.
-    await page.goto("https://www.google.com/");
+    await page.goto("https://practicetestautomation.com/practice-test-login/");
+
+    // Print the page title in console
+    console.log(await page.title());
 });
 
 test("Page Fixture Playwright Test", async ({ page }) => {
     // Playwright automatically creates the browser context and page.
     await page.goto("https://www.google.com/");
+
+    // Print the page title in console
+    console.log(await page.title());
+
+    // Assert that the page has the correct title
+    await expect(page).toHaveTitle("Google");
 });
 
+// to run only one test and skip the others
 /**
- * test.only("Page Fixture Playwright Test", async ({ page }) => {
-    // Playwright automatically creates the browser context and page.
-    await page.goto("https://www.google.com/");
-});
+ * test.only("Playwright Sample Test", async ({ page }) => {});
  */

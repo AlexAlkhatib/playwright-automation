@@ -14,12 +14,15 @@ export default defineConfig({
   // Generate an HTML report after test execution.
   reporter: 'html',
 
-  /* Shared settings for all projects. */
+  // Shared settings for all projects.
   use: {
     // Use Chromium as the browser.
     browserName: 'chromium',
 
-    /* Collect a trace when retrying a failed test. */
+    // Always run tests in headed mode.
+    headless: false,
+
+    // Collect a trace when retrying a failed test.
     trace: 'on-first-retry',
   },
 });
