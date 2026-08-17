@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-test("Browser Context Playwright Test", async ({ browser }) => {
+test.only("Browser Context Playwright Test", async ({ browser }) => {
     // Browser context options can include proxies, cookies, permissions, etc.
     // Open a new browser context.
     // The browser type is defined in playwright.config.js.
@@ -22,13 +22,23 @@ test("Browser Context Playwright Test", async ({ browser }) => {
     // id : input#username
     // class: input.form-control
     // [attribute=value]: [name='username']
-    // fill the field with value or click the button
+    // Fill the field with value or click the button
 
     await page.locator('#username').fill("Alex");
 
     await page.locator('#password').fill("test123");
 
     await page.locator("#signInBtn").click();
+
+    // Wait until this locator is shown up on the screen
+    // Locate and extract the error message for invalid credentails and display it in console
+    
+    const errorLocator = await page.locator("[style*='block']");
+    const errorMessage = errorLocator.textContent()
+    console.log(errorMessage);
+
+    // assert that the selected locator contains a specific text
+    await expect(errorLocator).toContainText('Incorrect');
 });
 
 test("Page Fixture Playwright Test", async ({ page }) => {
