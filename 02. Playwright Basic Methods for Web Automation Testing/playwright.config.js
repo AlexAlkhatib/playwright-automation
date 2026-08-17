@@ -1,28 +1,29 @@
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
+  // Directory containing Playwright tests.
   testDir: './tests',
 
-  // Set the default timeout for all tests to 30 seconds.
+  // Maximum time allowed for each test.
   timeout: 30 * 1000,
 
-  // Set the default timeout for assertions.
+  // Maximum time allowed for assertions.
   expect: {
     timeout: 5000,
   },
 
-  // Generate an HTML report after test execution.
+  // Generate an HTML test report.
   reporter: 'html',
 
-  // Shared settings for all projects.
   use: {
-    // Use Chromium as the browser.
+    // Run tests using Chromium.
     browserName: 'chromium',
 
-    // Always run tests in headed mode.
+    // Run the browser in headed mode.
+    // Change to true if you want headless execution.
     headless: false,
 
-    // Collect a trace when retrying a failed test.
+    // Collect a trace when a test fails for the first time.
     trace: 'on-first-retry',
   },
 });

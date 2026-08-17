@@ -17,28 +17,47 @@ test.only("Browser Context Playwright Test", async ({ browser }) => {
     // Print the page title in console
     console.log(await page.title());
 
-    // To identify elements we can use css or xpath
+    // To locate elements we can use css or xpath
     // Locate the username field by 
-    // id : input#username
-    // class: input.form-control
+    // id : #username
+    // class: .form-control
     // [attribute=value]: [name='username']
-    // Fill the field with value or click the button
 
-    await page.locator('#username').fill("Alex");
+    // Locate the username field
+    const username = page.locator('#username');
 
-    await page.locator('#password').fill("test123");
+    // Locate the password field
+    const password = await page.locator('#password');
 
-    await page.locator("#signInBtn").click();
+    // Locate the sign-in button
+    const signInButton = await page.locator("#signInBtn");
+
+    // Fill username and password
+    await username.fill("Alex");
+    await password.fill("test123");
+
+    // Click the sign-in button
+    await signInButton.click();
 
     // Wait until this locator is shown up on the screen
-    // Locate and extract the error message for invalid credentails and display it in console
-    
-    const errorLocator = await page.locator("[style*='block']");
-    const errorMessage = errorLocator.textContent()
+
+    // Locate the error message
+    const errorLocator = page.locator("[style*='block']");
+
+    // Extract and display the error message
+    const errorMessage = await errorLocator.textContent();
     console.log(errorMessage);
 
     // assert that the selected locator contains a specific text
     await expect(errorLocator).toContainText('Incorrect');
+
+    // Erase the content of username and password to test with correct credentials
+    await username.fill("rahulshettyacademy");
+    await password.fill("Learning@830$3mK2");
+    await signInButton.click();
+
+    // Get the first element, otherwise playwright will throw an exception of unique element violation
+    console.log(await page.locator(".card-body a").nth(0).textContent());
 });
 
 test("Page Fixture Playwright Test", async ({ page }) => {
