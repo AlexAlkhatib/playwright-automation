@@ -56,8 +56,17 @@ test.only("Browser Context Playwright Test", async ({ browser }) => {
     await password.fill("Learning@830$3mK2");
     await signInButton.click();
 
-    // Get the first element, otherwise playwright will throw an exception of unique element violation
-    console.log(await page.locator(".card-body a").nth(0).textContent());
+    // Locate the card titles
+    const cardTitles = page.locator(".card-body a");
+
+    // Get the first element title and print it in console
+    // Otherwise playwright will throw an exception of unique element violation
+    console.log(await cardTitles.nth(0).textContent()); // iphone X
+
+    // If we want to get all card titles at once
+    const allTitles = await cardTitles.allTextContents();
+    console.log(allTitles); // [ 'iphone X', 'Samsung Note 8', 'Nokia Edge', 'Blackberry' ]
+    // This method is not reliable because even if all elemnts in the page are not loaded this method will return an empty list [] and the assertion is still valid
 });
 
 test("Page Fixture Playwright Test", async ({ page }) => {
