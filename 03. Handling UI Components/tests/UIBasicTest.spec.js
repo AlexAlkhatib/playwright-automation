@@ -69,7 +69,7 @@ test("Browser Context Playwright Test", async ({ browser }) => {
     // This method is not reliable because even if all elemnts in the page are not loaded this method will return an empty list [] and the assertion is still valid
 });
 
-test.only("UI Controls", async ({ page }) => {
+test("UI Controls", async ({ page }) => {
     // Go to the URL
     await page.goto("https://rahulshettyacademy.com/loginpagePractise/");
 
@@ -119,4 +119,48 @@ test.only("UI Controls", async ({ page }) => {
 
     // The execution will pause before closing the test (so we can see the result because the browser closes quickly)
     // await page.pause();
+});
+
+test.only("Child Windows Handling", async ({ browser }) => {
+    const context = await browser.newContext();
+
+    const page = await context.newPage();
+
+    await page.goto("https://rahulshettyacademy.com/loginpagePractise/");
+
+    const documentLink = page.locator("[href*='documents-request']");
+
+    // Both operations need to be parallely good before we proceede
+    // Takes an array of promises
+    const [newPage] = await Promise.all(
+    [
+        // We need to switch to the new page context 
+        // const page2 = ...
+        // listen for any new page
+        context.waitForEvent("page"), 
+        // Go to a new page
+        // new page is open
+        documentLink.click()
+    ] 
+    // there are three stage of promises: pendding, rejected and fullfiled
+    // We make sure that both promises are successfully fulfilled
+    );
+
+    // Automate the new page
+    // Locate the red text
+    const text = await newPage.locator(".red").textContent();
+
+    // Split the text to extract the domain name
+    const domain = text.split("@")[1].split(" ")[0];
+
+    // Print domain in console
+    console.log(domain);
+
+    // use the domain name to fill username field in the first page
+    // Locate the username field
+    const username = page.locator('#username');
+    await username.fill(domain);
+    console.log(await username.inputValue());
+
+    await page.pause();
 });
