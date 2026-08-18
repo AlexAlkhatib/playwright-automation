@@ -111,7 +111,11 @@ test.only("UI Controls", async ({ page }) => {
 
     // To assert that the checkbox is unchecked there isn't a method to verify so we need to use isCkecked()
     // toBeTruthy() , toBeFalsy()
-    await expect(page.locator("#terms").isChecked()).toBeFalsy();
+    expect(await page.locator("#terms").isChecked()).toBeFalsy();
+
+    // Check if the link is blinking (to have attribute with type class with blinkingText text)
+    const documentLink = page.locator("[href*='documents-request']");
+    await expect(documentLink).toHaveAttribute("class", "blinkingText");
 
     // The execution will pause before closing the test (so we can see the result because the browser closes quickly)
     // await page.pause();
