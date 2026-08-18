@@ -94,9 +94,25 @@ test.only("UI Controls", async ({ page }) => {
     // Accept the message in pop-up window
     await page.locator("#okayBtn").click();
 
-    // Verify if the radio button is cheked or not
-    // TODO
+    // If we want to display in console if the radio button is checked or not in boolean value (true or false)
+    console.log(await page.locator(".radiotextsty").last().isChecked());
+
+    // Verify if the radio button is checked or not
+    await expect(page.locator(".radiotextsty").last()).toBeChecked();
+
+    // Locate the terms and conditions checkboxe
+    await page.locator("#terms").click();
+
+    // Verify if the checkbox is checked
+    await expect(page.locator("#terms")).toBeChecked();
+
+    // Uncheck the terms and conditions
+    await page.locator("#terms").uncheck();
+
+    // To assert that the checkbox is unchecked there isn't a method to verify so we need to use isCkecked()
+    // toBeTruthy() , toBeFalsy()
+    await expect(page.locator("#terms").isChecked()).toBeFalsy();
 
     // The execution will pause before closing the test (so we can see the result because the browser closes quickly)
-    await page.pause();
+    // await page.pause();
 });
