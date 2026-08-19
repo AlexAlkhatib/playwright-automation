@@ -1,166 +1,388 @@
 import { expect, test } from '@playwright/test';
 
-test("Browser Context Playwright Test", async ({ browser }) => {
-    // Browser context options can include proxies, cookies, permissions, etc.
-    // Open a new browser context.
-    // The browser type is defined in playwright.config.js.
+/**
+ * ============================================================
+ * TEST 1 - Browser Context / Login
+ * ============================================================
+ *
+ * This test demonstrates:
+ * - Creating a browser context manually
+ * - Creating a page manually
+ * - Navigating to a URL
+ * - Using locators
+ * - Filling input fields
+ * - Clicking a button
+ * - Reading text
+ * - Assertions
+ * - Handling multiple elements with nth()
+ * - Retrieving multiple texts with allTextContents()
+ */
+test("Browser Context - Login and Product Titles", async ({ browser }) => {
+    // Create a new browser context.
+    //
+    // A browser context is an isolated browser session.
+    // It can contain its own cookies, local storage, permissions, etc.
     const context = await browser.newContext();
 
-    // Open a new page within the browser context.
-    // This is the actual page where the URL will be loaded.
+    // Create a new page inside the browser context.
     const page = await context.newPage();
 
-    // Navigate to the specified URL.
-    // Here, the browser context and page are created explicitly.
-    await page.goto("https://rahulshettyacademy.com/loginpagePractise/");
+    // Navigate to the login page.
+    await page.goto(
+        "https://rahulshettyacademy.com/loginpagePractise/"
+    );
 
-    // Print the page title in console
+    // Display the page title in the console.
     console.log(await page.title());
 
-    // To locate elements we can use css or xpath
-    // Locate the username field by 
-    // id : #username
-    // class: .form-control
-    // [attribute=value]: [name='username']
+    /*
+     * ----------------------------------------------------------
+     * LOCATORS
+     * ----------------------------------------------------------
+     *
+     * Examples of CSS selectors:
+     *
+     * ID:
+     * #username
+     *
+     * Class:
+     * .form-control
+     *
+     * Attribute:
+     * [name='username']
+     */
 
-    // Locate the username field
-    const username = page.locator('#username');
+    // Locate the username field.
+    const username = page.locator("#username");
 
-    // Locate the password field
-    const password = await page.locator('#password');
+    // Locate the password field.
+    const password = page.locator("#password");
 
-    // Locate the sign-in button
-    const signInButton = await page.locator("#signInBtn");
+    // Locate the Sign In button.
+    const signInButton = page.locator("#signInBtn");
 
-    // Fill username and password
+    /*
+     * ----------------------------------------------------------
+     * LOGIN WITH INVALID CREDENTIALS
+     * ----------------------------------------------------------
+     */
+
+    // Fill the username field.
     await username.fill("Alex");
+
+    // Fill the password field.
     await password.fill("test123");
 
-    // Click the sign-in button
+    // Click the Sign In button.
     await signInButton.click();
 
-    // Wait until this locator is shown up on the screen
+    /*
+     * ----------------------------------------------------------
+     * ERROR MESSAGE
+     * ----------------------------------------------------------
+     */
 
-    // Locate the error message
+    // Locate the error message.
     const errorLocator = page.locator("[style*='block']");
 
-    // Extract and display the error message
+    // Extract the error message text.
     const errorMessage = await errorLocator.textContent();
+
+    // Display the error message in the console.
     console.log(errorMessage);
 
-    // assert that the selected locator contains a specific text
-    await expect(errorLocator).toContainText('Incorrect');
+    // Verify that the error message contains "Incorrect".
+    await expect(errorLocator).toContainText("Incorrect");
 
-    // Erase the content of username and password to test with correct credentials
+    /*
+     * ----------------------------------------------------------
+     * LOGIN WITH VALID CREDENTIALS
+     * ----------------------------------------------------------
+     */
+
+    // Replace the invalid username with valid credentials.
     await username.fill("rahulshettyacademy");
+
+    // Replace the password with valid credentials.
     await password.fill("Learning@830$3mK2");
+
+    // Click the Sign In button again.
     await signInButton.click();
 
-    // Locate the card titles
+    /*
+     * ----------------------------------------------------------
+     * PRODUCT TITLES
+     * ----------------------------------------------------------
+     */
+
+    // Locate all product title links.
+    //
+    // This locator can match multiple elements.
     const cardTitles = page.locator(".card-body a");
 
-    // Get the first element title and print it in console
-    // Otherwise playwright will throw an exception of unique element violation
-    console.log(await cardTitles.nth(0).textContent()); // iphone X
+    // Get the first product title.
+    //
+    // nth(0) means the first element because indexes start at 0.
+    const firstProductTitle = await cardTitles.nth(0).textContent();
 
-    // If we want to get all card titles at once
+    // Display the first product title.
+    console.log(firstProductTitle);
+
+    // Get all product titles at once.
     const allTitles = await cardTitles.allTextContents();
-    console.log(allTitles); // [ 'iphone X', 'Samsung Note 8', 'Nokia Edge', 'Blackberry' ]
-    // This method is not reliable because even if all elemnts in the page are not loaded this method will return an empty list [] and the assertion is still valid
+
+    // Display all product titles.
+    console.log(allTitles);
 });
 
+/**
+ * ============================================================
+ * TEST 2 - UI Controls
+ * ============================================================
+ *
+ * This test demonstrates:
+ * - Dropdowns
+ * - Radio buttons
+ * - Checkboxes
+ * - isChecked()
+ * - toBeChecked()
+ * - toBeTruthy()
+ * - toBeFalsy()
+ * - toHaveAttribute()
+ */
 test("UI Controls", async ({ page }) => {
-    // Go to the URL
-    await page.goto("https://rahulshettyacademy.com/loginpagePractise/");
+    // Navigate to the login page.
+    await page.goto(
+        "https://rahulshettyacademy.com/loginpagePractise/"
+    );
 
-    // Locate the username field
-    const username = page.locator('#username');
+    /*
+     * ----------------------------------------------------------
+     * LOCATORS
+     * ----------------------------------------------------------
+     */
 
-    // Locate the password field
-    const password = await page.locator('#password');
+    // Locate the username field.
+    const username = page.locator("#username");
 
-    // Locate the sign-in button
-    const signInButton = await page.locator("#signInBtn");
+    // Locate the password field.
+    const password = page.locator("#password");
 
-    // Locate the dropdown menu
+    // Locate the Sign In button.
+    const signInButton = page.locator("#signInBtn");
+
+    // Locate the dropdown.
     const dropdown = page.locator("select.form-control");
 
-    // Select an "Consult" dropdown option
+    /*
+     * ----------------------------------------------------------
+     * DROPDOWN
+     * ----------------------------------------------------------
+     */
+
+    // Select the "Consult" option.
     await dropdown.selectOption("consult");
 
-    // Select a radio button (User) last() or nth(1)
-    await page.locator(".radiotextsty").last().click();
+    /*
+     * ----------------------------------------------------------
+     * RADIO BUTTON
+     * ----------------------------------------------------------
+     */
 
-    // Accept the message in pop-up window
+    // Locate the radio buttons and select the last one.
+    const userRadioButton = page.locator(".radiotextsty").last();
+
+    // Click the last radio button.
+    await userRadioButton.click();
+
+    // Click "Okay" on the popup.
     await page.locator("#okayBtn").click();
 
-    // If we want to display in console if the radio button is checked or not in boolean value (true or false)
-    console.log(await page.locator(".radiotextsty").last().isChecked());
+    // Display whether the radio button is checked.
+    console.log(await userRadioButton.isChecked());
 
-    // Verify if the radio button is checked or not
-    await expect(page.locator(".radiotextsty").last()).toBeChecked();
+    // Verify that the radio button is checked.
+    await expect(userRadioButton).toBeChecked();
 
-    // Locate the terms and conditions checkboxe
-    await page.locator("#terms").click();
+    /*
+     * ----------------------------------------------------------
+     * CHECKBOX
+     * ----------------------------------------------------------
+     */
 
-    // Verify if the checkbox is checked
-    await expect(page.locator("#terms")).toBeChecked();
+    // Locate the Terms and Conditions checkbox.
+    const termsCheckbox = page.locator("#terms");
 
-    // Uncheck the terms and conditions
-    await page.locator("#terms").uncheck();
+    // Check the checkbox.
+    await termsCheckbox.check();
 
-    // To assert that the checkbox is unchecked there isn't a method to verify so we need to use isCkecked()
-    // toBeTruthy() , toBeFalsy()
-    expect(await page.locator("#terms").isChecked()).toBeFalsy();
+    // Verify that the checkbox is checked.
+    await expect(termsCheckbox).toBeChecked();
 
-    // Check if the link is blinking (to have attribute with type class with blinkingText text)
-    const documentLink = page.locator("[href*='documents-request']");
-    await expect(documentLink).toHaveAttribute("class", "blinkingText");
+    // Uncheck the checkbox.
+    await termsCheckbox.uncheck();
 
-    // The execution will pause before closing the test (so we can see the result because the browser closes quickly)
+    // Verify that the checkbox is NOT checked.
+    expect(await termsCheckbox.isChecked()).toBeFalsy();
+
+    /*
+     * ----------------------------------------------------------
+     * LINK ATTRIBUTE
+     * ----------------------------------------------------------
+     */
+
+    // Locate the document request link.
+    const documentLink = page.locator(
+        "[href*='documents-request']"
+    );
+
+    // Verify that the link has the expected CSS class.
+    await expect(documentLink).toHaveAttribute(
+        "class",
+        "blinkingText"
+    );
+
+    /*
+     * ----------------------------------------------------------
+     * DEBUGGING
+     * ----------------------------------------------------------
+     */
+
+    // Uncomment this line if you want to pause the test
+    // and inspect the browser manually.
+    //
     // await page.pause();
 });
 
-test.only("Child Windows Handling", async ({ browser }) => {
+/**
+ * ============================================================
+ * TEST 3 - Child Windows Handling
+ * ============================================================
+ *
+ * This test demonstrates:
+ * - Browser Context
+ * - Multiple pages
+ * - Handling a new browser page
+ * - Promise.all()
+ * - waitForEvent("page")
+ * - Extracting text
+ * - String manipulation
+ * - Using information from one page in another page
+ */
+test("Child Windows Handling", async ({ browser }) => {
+    /*
+     * ----------------------------------------------------------
+     * CREATE BROWSER CONTEXT AND PAGE
+     * ----------------------------------------------------------
+     */
+
+    // Create a new browser context.
     const context = await browser.newContext();
 
+    // Create the main page.
     const page = await context.newPage();
 
-    await page.goto("https://rahulshettyacademy.com/loginpagePractise/");
-
-    const documentLink = page.locator("[href*='documents-request']");
-
-    // Both operations need to be parallely good before we proceede
-    // Takes an array of promises
-    const [newPage] = await Promise.all(
-    [
-        // We need to switch to the new page context 
-        // const page2 = ...
-        // listen for any new page
-        context.waitForEvent("page"), 
-        // Go to a new page
-        // new page is open
-        documentLink.click()
-    ] 
-    // there are three stage of promises: pendding, rejected and fullfiled
-    // We make sure that both promises are successfully fulfilled
+    // Navigate to the login page.
+    await page.goto(
+        "https://rahulshettyacademy.com/loginpagePractise/"
     );
 
-    // Automate the new page
-    // Locate the red text
-    const text = await newPage.locator(".red").textContent();
+    /*
+     * ----------------------------------------------------------
+     * DOCUMENT LINK
+     * ----------------------------------------------------------
+     */
 
-    // Split the text to extract the domain name
+    // Locate the document request link.
+    const documentLink = page.locator(
+        "[href*='documents-request']"
+    );
+
+    /*
+     * ----------------------------------------------------------
+     * HANDLE NEW PAGE
+     * ----------------------------------------------------------
+     *
+     * Clicking the link opens a new page.
+     *
+     * We need to:
+     *
+     * 1. Wait for the new page event.
+     * 2. Click the link.
+     *
+     * Both operations must be started together.
+     *
+     * Promise.all() waits until both promises are fulfilled.
+     */
+
+    const [newPage] = await Promise.all([
+        // Listen for a new page being opened.
+        context.waitForEvent("page"),
+
+        // Click the link that opens the new page.
+        documentLink.click(),
+    ]);
+
+    /*
+     * ----------------------------------------------------------
+     * AUTOMATE THE NEW PAGE
+     * ----------------------------------------------------------
+     */
+
+    // Locate the red text in the new page.
+    const redText = newPage.locator(".red");
+
+    // Extract the text.
+    const text = await redText.textContent();
+
+    // Display the complete text.
+    console.log(text);
+
+    /*
+     * ----------------------------------------------------------
+     * EXTRACT THE DOMAIN
+     * ----------------------------------------------------------
+     *
+     * Example:
+     *
+     * text = "Please email us at mentor@rahulshettyacademy.com ..."
+     *
+     * split("@")[1]
+     *      ↓
+     * rahulshettyacademy.com ...
+     *
+     * split(" ")[0]
+     *      ↓
+     * rahulshettyacademy.com
+     */
+
     const domain = text.split("@")[1].split(" ")[0];
 
-    // Print domain in console
+    // Display the extracted domain.
     console.log(domain);
 
-    // use the domain name to fill username field in the first page
-    // Locate the username field
-    const username = page.locator('#username');
+    /*
+     * ----------------------------------------------------------
+     * USE THE DOMAIN ON THE FIRST PAGE
+     * ----------------------------------------------------------
+     */
+
+    // Locate the username field on the original page.
+    const username = page.locator("#username");
+
+    // Fill the username field with the extracted domain.
     await username.fill(domain);
+
+    // Display the value entered into the username field.
     console.log(await username.inputValue());
 
-    await page.pause();
+    /*
+     * ----------------------------------------------------------
+     * DEBUGGING
+     * ----------------------------------------------------------
+     */
+
+    // Pause the test if you want to inspect both pages manually.
+    //
+    // await page.pause();
 });
