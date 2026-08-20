@@ -14,20 +14,37 @@ test("Client App - Login and Get Product Titles", async ({ page }) => {
     await page.locator("[value='Login']").click();
 
     // Wait until the first product title is available.
-    //
-    // Alternative:
-    // await page.waitForLoadState("networkidle");
-    //
-    // Waiting for a specific element is often useful when we need
-    // to make sure that the required content is available.
     await page.locator(".card-body b").first().waitFor();
 
-    // Locate all product titles.
-    const productTitles = page.locator(".card-body b");
+    // Select Adidas shoes
+    // Create a loctor for all products, iterate on each on, check if the product name contains addidas, add the product to the cart
 
-    // Retrieve the text of all product titles.
-    const titles = await productTitles.allTextContents();
+    // Locate all products
+    const products = page.locator(".card-body");
 
-    // Display the product titles in the console.
-    console.log(titles);
+    // Product name
+    const productName = "ADIDAS ORIGINAL";
+
+    // Get number of products
+    const productCount = await products.count();
+
+    // Iterate through all products
+    for (let i = 0; i < productCount; i++) {
+
+        // Get the current product
+        const product = products.nth(i);
+
+        // Get product title
+        const currentProductName = await product.locator("b").textContent();
+
+        // Check if product name contains ADIDAS ORIGINAL
+        if (currentProductName.includes(productName)) {
+
+            // Add the product to the cart
+            await product.getByRole("button", { name: "Add To Cart" }).click();
+
+            // Exit loop
+            break;
+        }
+    }
 });
