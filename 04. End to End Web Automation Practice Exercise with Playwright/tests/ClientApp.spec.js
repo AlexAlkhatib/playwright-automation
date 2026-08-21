@@ -110,6 +110,39 @@ test("Client App - Login and Get Product Titles", async ({ page }) => {
     const orderId = await page.locator(".em-spacer-1 .ng-star-inserted").textContent();
     console.log(orderId);
 
+    // Click the button to go to orders
+    await page.locator("button[routerlink*='myorders']").click();
+
+    // first we have to wait because count isn't a method in auto-wait (official playwright doc)
+    await page.locator("tbody").waitFor();
+
+    // Search the ordder in history by order id table -> rows
+    const orders = await page.locator("tbody tr");
+    
+    // get the count
+    const ordersCount = await orders.count();
+
+    for (let i = 0; i < ordersCount; i++) {
+        // get the order's title
+        const currentOrderId = await orders.nth(i).locator("th").textContent();
+
+        // Check if current order id is equal to order id
+        if (orderId.includes(currentOrderId)) {
+            // Click the view button
+            await orders.nth(i).locator("button").first().click();
+
+            // exit the loop
+            break;
+        }
+    }
+
+    // Locate the product id in the view page
+    // Here we're not putting waitFor, because textContent already has waiting feature
+    const orderIdDetails = await page.locator(".col-text").textContent();
+
+    // Assert that two product ids are the same
+    expect(orderId.includes(orderIdDetails)).toBeTruthy();
+
     // To see the result
     await page.pause();
 });
