@@ -1,4 +1,4 @@
-import { test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 test("Client App - Login and Get Product Titles", async ({ page }) => {
     // Navigate to the client application.
@@ -41,10 +41,25 @@ test("Client App - Login and Get Product Titles", async ({ page }) => {
         if (currentProductName.includes(productName)) {
 
             // Add the product to the cart
-            await product.getByRole("button", { name: "Add To Cart" }).click();
+            await product.locator("text= Add To Cart").click();
 
             // Exit loop
             break;
         }
     }
+
+    // Click the cart button
+    await page.locator("[routerLink*='cart']").click();
+
+    // Wait until the product is available in hte cart
+    await page.locator("h3:has-text('ADIDAS ORIGINAL')").waitFor();
+
+    // Check if the product is visible in the cart
+    const productIsVisibleInCart = await page.locator("h3:has-text('ADIDAS ORIGINAL')").isVisible();
+
+    // Assert that hte item is visible in the cart
+    expect(productIsVisibleInCart).toBeTruthy();
+
+    // To see the result
+    await page.pause();
 });
