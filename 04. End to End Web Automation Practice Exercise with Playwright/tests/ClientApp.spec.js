@@ -5,10 +5,12 @@ test("Client App - Login and Get Product Titles", async ({ page }) => {
     await page.goto("https://rahulshettyacademy.com/client");
 
     // Locate and fill the email field.
-    await page.locator("#userEmail").fill("anshika@gmail.com");
+    const email = "anshika@gmail.com";
+    await page.locator("#userEmail").fill(email);
 
     // Locate and fill the password field.
-    await page.locator("#userPassword").fill("Iamking@000");
+    const password = "Iamking@000";
+    await page.locator("#userPassword").fill(password);
 
     // Click the Login button.
     await page.locator("[value='Login']").click();
@@ -91,6 +93,22 @@ test("Client App - Login and Get Product Titles", async ({ page }) => {
             break;
         }
     }
+
+    // expect that the email address is the same as the one used for login
+    expect(page.locator(".user__name [type='text']").first()).toHaveText(email);
+
+    // Fill up the credit card information
+    // TODO
+
+    // Click on the place order button
+    await page.locator(".action__submit").click();
+
+    // Make sure that the page has a message like "Thank you for the order"
+    await expect(page.locator(".hero-primary")).toHaveText(" Thankyou for the order. ");
+
+    // Get the order id
+    const orderId = await page.locator(".em-spacer-1 .ng-star-inserted").textContent();
+    console.log(orderId);
 
     // To see the result
     await page.pause();
