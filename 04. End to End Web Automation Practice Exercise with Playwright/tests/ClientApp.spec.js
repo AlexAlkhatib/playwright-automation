@@ -60,6 +60,38 @@ test("Client App - Login and Get Product Titles", async ({ page }) => {
     // Assert that hte item is visible in the cart
     expect(productIsVisibleInCart).toBeTruthy();
 
+    // Click the checkout button page.locator("[type='button']").last().click();
+    await page.locator("text=Checkout").click();
+
+    // Select country
+    await page.locator("[placeholder*='Country']").pressSequentially("Fra", {delay:100});
+
+    // Locate country options
+    const dropdown = page.locator(".ta-results");
+    await dropdown.waitFor();
+
+    // Select France
+    const optionsCount = await dropdown.locator("button").count();
+
+    // Iterate through each option
+    for (let i = 0; i < optionsCount; i++) {
+        // Get the current option
+        const option = dropdown.locator("button").nth(i);
+
+        // Get option title
+        const currentOptionName = await option.textContent();
+
+        // Check if option name contains France
+        if (currentOptionName.includes("France")) {
+
+            // Add the option buton
+            await option.click();
+
+            // Exit loop
+            break;
+        }
+    }
+
     // To see the result
     await page.pause();
 });
