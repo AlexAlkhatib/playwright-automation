@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "test": "node ./node_modules/@playwright/test/cli.js test"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
