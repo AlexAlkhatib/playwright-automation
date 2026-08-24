@@ -25,6 +25,15 @@ test("Calendar validations", async ({ page }) => {
     // await page.locator(".react-calendar__tile react-calendar__month-view__days__day").filter({hasText: day}).click(); (NOT WORKING)
     await page.locator("//abbr[text()='" + day + "']").click();
 
+    // assertion
+    const expectedList = [month, day, year];
+    const inputs = await page.locator(".react-date-picker__inputGroup__input");
+
+    for (let i = 0; i< expectedList.length; i++) {
+        const value = await inputs.nth(i).inputValue();
+        expect(value).toEqual(expectedList[i]);
+    }
+
     // pause the process
     await page.pause();
 });
