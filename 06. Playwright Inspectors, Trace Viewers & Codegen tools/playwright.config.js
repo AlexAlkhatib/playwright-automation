@@ -23,7 +23,10 @@ export default defineConfig({
     // Change to true if you want headless execution.
     headless: false,
 
-    // Collect a trace when a test fails for the first time.
-    trace: 'on-first-retry',
+    // captures a screenshot of every action on the screen
+    screenshot: 'on',
+
+    // Collect a trace only when a test fail.
+    trace: 'retain-on-failure',
   },
 });
