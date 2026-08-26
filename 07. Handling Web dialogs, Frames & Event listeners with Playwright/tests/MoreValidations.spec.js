@@ -37,6 +37,20 @@ test("Popup validations", async ({page}) => {
     // hover an item with mouse using playwright
     await page.locator("#mousehover").hover();
 
+    // locate frames
+    // it will switch from the normal page frame to the select iframe
+    // it will give you a new page object
+    const framePage = page.frameLocator("#courses-iframe");
+
+    // click on "All Access Plan" from the iframe page
+    // select only the element in visible mode
+    await framePage.locator("li a[href*='lifetime-access']:visible").click();
+
+    // extract the number of subscribers
+    // get the parent element -> child element -> gab the text content
+    const text = await framePage.locator(".text h2 span").textContent();
+    console.log(text + " subscribers"); // 13,522 subscribers
+
     // pause the process
     await page.pause();
 })
