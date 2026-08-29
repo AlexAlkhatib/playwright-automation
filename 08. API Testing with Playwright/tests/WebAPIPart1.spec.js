@@ -4,6 +4,7 @@ const loginPayLoad =
     userEmail: "anshika@gmail.com",
     userPassword: "Iamking@000"
 };
+let token;
 
 test.beforeAll(async () => {
     // create a request context
@@ -20,8 +21,11 @@ test.beforeAll(async () => {
     expect(loginResponse.ok()).toBeTruthy();
 
     // if the login response is ok, then grab the token variable
-    const loginResponseJson = loginResponse.json();
-    const token = loginResponseJson.token;
+    const loginResponseJson = await loginResponse.json();
+    token = loginResponseJson.token;
+
+    // print the token
+    console.log(token);
 });
 
 test.beforeEach(() => {
@@ -29,22 +33,15 @@ test.beforeEach(() => {
 });
 
 test("Client App Other Way", async ({ page }) => {
-    // Navigate to the client application.
-    await page.goto("https://rahulshettyacademy.com/client");
+    //Insert the token into the page
+    page.addInitScript(value => {
+        window.localStorage.setItem("token", value);
+    }, token);
 
-    // Locate and fill the email field by placeholder.
-    const email = "anshika@gmail.com";
-    await page.getByPlaceholder("email@example.com").fill(email);
+    // Go the web page
+    await page.goto("https://rahulshettyacademy.com/client/");
 
-    // Locate and fill the password field by placeholder.
-    const password = "Iamking@000";
-    await page.getByPlaceholder("enter your passsword").fill(password);
-
-    // Click the Login button by role.
-    await page.getByRole("button", {name: "Login"}).click();
-
-    // Wait until the first product title is available. (don't change)
-    await page.waitForLoadState("networkidle");
+    // Wait until the card body is loaded
     await page.locator(".card-body b").first().waitFor();
 
     // Locate all products and filter by the product name
