@@ -1,135 +1,46 @@
-import { expect, test, request } from '@playwright/test';
+const {test, expect, request} = require('@playwright/test');
+const {APiUtils} = require('./utils/APiUtils');
+const loginPayLoad = {userEmail:"anshika@gmail.com",userPassword:"Iamking@000"};
+const orderPayLoad = {orders:[{country:"France",productOrderedId:"67a8dde5c0d3e6622a297cc8"}]};
 
-const loginPayload = {
-    userEmail: "anshika@gmail.com",
-    userPassword: "Iamking@000"
-};
 
-const orderPayload = {
-    orders: [
-        {
-            country: "France",
-            productOrderId: "6a92a86b21054ba465fbb376"
-        }
-    ]
-};
+let response;
+test.beforeAll( async()=>
+{
+   const apiContext = await request.newContext();
+   const apiUtils = new APiUtils(apiContext,loginPayLoad);
+   response =  await apiUtils.createOrder(orderPayLoad);
 
-let token;
-let orderId;
+})
 
-test.beforeAll(async () => {
-    const apiContext = await request.newContext();
 
-    // =========================
-    // Login API
-    // =========================
-    const loginResponse = await apiContext.post(
-        "https://rahulshettyacademy.com/api/ecom/auth/login",
-        {
-            data: loginPayload
-        }
-    );
+//create order is success
+test('@API Place the order', async ({page})=>
+{ 
+    await page.addInitScript(value => {
 
-    expect(loginResponse.ok()).toBeTruthy();
+        window.localStorage.setItem('token',value);
+    }, response.token );
+await page.goto("https://rahulshettyacademy.com/client");
+ await page.locator("button[routerlink*='myorders']").click();
+ await page.locator("tbody").waitFor();
+const rows = await page.locator("tbody tr");
 
-    const loginResponseJson = await loginResponse.json();
-    token = loginResponseJson.token;
 
-    console.log("Token:", token);
+for(let i =0; i<await rows.count(); ++i)
+{
+   const rowOrderId =await rows.nth(i).locator("th").textContent();
+   if (response.orderId.includes(rowOrderId))
+   {
+       await rows.nth(i).locator("button").first().click();
+       break;
+   }
+}
+const orderIdDetails =await page.locator(".col-text").textContent();
+//await page.pause();
+expect(response.orderId.includes(orderIdDetails)).toBeTruthy();
 
-    // =========================
-    // Create Order API
-    // =========================
-    const orderResponse = await apiContext.post(
-        "https://rahulshettyacademy.com/api/ecom/order/create-order",
-        {
-            data: orderPayload,
-            headers: {
-                Authorization: token,
-                "Content-Type": "application/json"
-            }
-        }
-    );
-
-    expect(orderResponse.ok()).toBeTruthy();
-
-    const orderResponseJson = await orderResponse.json();
-    orderId = orderResponseJson.orders[0];
-
-    console.log("Order ID:", orderId);
-
-    await apiContext.dispose();
 });
 
-test("Client App", async ({ page }) => {
-
-    // =========================
-    // Inject token into browser
-    // =========================
-    await page.addInitScript((value) => {
-        window.localStorage.setItem("token", value);
-    }, token);
-
-    // =========================
-    // Open application
-    // =========================
-    await page.goto("https://rahulshettyacademy.com/client/");
-
-    // Wait for products to load
-    await page.locator(".card-body b").first().waitFor();
-
-    // =========================
-    // Add Adidas product
-    // =========================
-    await page
-        .locator(".card-body")
-        .filter({ hasText: "ADIDAS ORIGINAL" })
-        .getByRole("button", { name: "Add To Cart" })
-        .click();
-
-    // =========================
-    // Go to Cart
-    // =========================
-    await page
-        .getByRole("listitem")
-        .getByRole("button", { name: "Cart" })
-        .click();
-
-    // Verify product is in cart
-    await expect(
-        page.getByText("ADIDAS ORIGINAL")
-    ).toBeVisible();
-
-    // =========================
-    // Checkout
-    // =========================
-    await page
-        .getByRole("button", { name: "Checkout" })
-        .click();
-
-    // =========================
-    // Select France
-    // =========================
-    await page
-        .getByPlaceholder("Select Country")
-        .pressSequentially("Fra", { delay: 100 });
-
-    await page.locator(".ta-results").waitFor();
-
-    await page
-        .getByRole("button", { name: "Fra" })
-        .first()
-        .click();
-
-    // =========================
-    // Place Order
-    // =========================
-    await page.getByText("PLACE ORDER").click();
-
-    // =========================
-    // Verify confirmation
-    // =========================
-    await expect(
-        page.getByText("Thankyou for the order.")
-    ).toBeVisible();
-});
+//Verify if order created is showing in history page
+// Precondition - create order -
