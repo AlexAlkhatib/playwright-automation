@@ -1,4 +1,4 @@
-# 📘 Playwright — Chapitre 6
+# 🎭 Playwright — Chapitre 6
 
 ## Inspectors, Codegen & Trace Viewer
 
