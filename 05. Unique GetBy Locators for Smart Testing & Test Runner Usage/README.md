@@ -1,77 +1,84 @@
-# 📘 Playwright — Chapitre 5
+# 🎭 Playwright — Chapitre 5
+
 ## Smart GetBy Locators, Test Runner & Calendars
 
-## À propos de ce chapitre
-
-Ce chapitre introduit une approche plus lisible pour localiser les éléments avec Playwright :
-
-* `getByLabel()`
-* `getByRole()`
-* `getByText()`
-* `getByPlaceholder()`
-* `filter()`
-
-Il montre également comment utiliser le **Playwright UI Runner** pour observer et déboguer les tests.
-
-La dernière partie présente une stratégie d’automatisation et de validation d’un **calendrier**.
+> **Objectif du chapitre :** apprendre à construire des locators Playwright plus lisibles et plus proches du comportement utilisateur, utiliser le **Playwright UI Runner**, puis automatiser et valider un **calendrier**.
 
 ---
 
-## Sommaire
+## 📚 Sommaire
 
-1. Objectifs
-2. GetBy locators
-3. `getByLabel()`
-4. `getByPlaceholder()`
-5. `getByRole()`
-6. `getByText()`
-7. `filter()` et chaining
-8. Playwright UI Runner
-9. Test E2E avec GetBy
-10. Limites de `getByLabel()`
-11. Automatiser un calendrier
-12. Valider la date
-13. Exemple complet
-14. Pièges et bonnes pratiques
-15. Exercices
-16. Fiche mémo
-17. Checklist
+* [🎯 Objectifs](#-objectifs)
+* [🔎 GetBy Locators](#-getby-locators)
+
+  * [`getByLabel()`](#getbylabel)
+  * [`getByPlaceholder()`](#getbyplaceholder)
+  * [`getByRole()`](#getbyrole)
+  * [`getByText()`](#getbytext)
+  * [`filter()` et chaining](#filter-et-chaining)
+* [🖥️ Playwright UI Runner](#️-playwright-ui-runner)
+* [🧪 Test E2E avec GetBy](#-test-e2e-avec-getby)
+* [🏷️ Limites de `getByLabel()`](#️-limites-de-getbylabel)
+* [📅 Automatiser un calendrier](#-automatiser-un-calendrier)
+
+  * [Ouvrir le calendrier](#ouvrir-le-calendrier)
+  * [Sélectionner l'année](#sélectionner-lannée)
+  * [Sélectionner le mois](#sélectionner-le-mois)
+  * [Sélectionner le jour](#sélectionner-le-jour)
+* [✅ Valider la date](#-valider-la-date)
+* [🧩 Exemple complet](#-exemple-complet)
+* [⚠️ Pièges et bonnes pratiques](#️-pièges-et-bonnes-pratiques)
+* [🏋️ Exercices](#️-exercices)
+* [📝 Fiche mémo](#-fiche-mémo)
+* [☑️ Checklist](#️-checklist)
+* [🎓 Conclusion](#-conclusion)
 
 ---
 
-# 1. Objectifs
+# 🎯 Objectifs
 
-* Comprendre les locators GetBy.
+À la fin de ce chapitre, je dois être capable de :
+
+* Comprendre les **GetBy locators**.
 * Utiliser `getByLabel()` pour les contrôles associés à un label.
 * Utiliser `getByPlaceholder()` pour les champs avec placeholder.
-* Utiliser `getByRole()` pour les éléments identifiés par leur rôle.
-* Utiliser `getByText()` pour cibler un texte.
+* Utiliser `getByRole()` pour cibler un élément grâce à son rôle.
+* Utiliser `getByText()` pour cibler un texte affiché.
 * Combiner `locator()`, `filter()` et les GetBy locators.
-* Lancer les tests avec le UI Runner.
+* Utiliser le **Playwright UI Runner**.
 * Automatiser l'année, le mois et le jour dans un calendrier.
-* Valider une date avec `inputValue()` et `expect()`.
+* Lire la valeur d'un input avec `inputValue()`.
+* Valider une date avec `expect()` et `toEqual()`.
 
 ---
 
-# 2. GetBy locators
+# 🔎 GetBy Locators
 
-La stratégie de locator peut dépendre des pratiques de l'entreprise :
+Playwright propose plusieurs méthodes permettant de cibler les éléments de manière plus descriptive.
 
-| Locator              | Utilisation                    | Exemple                                        |
-| -------------------- | ------------------------------ | ---------------------------------------------- |
-| `locator()`          | CSS/XPath ou locator classique | `page.locator(".card-body")`                   |
-| `getByLabel()`       | Label associé à un contrôle    | `page.getByLabel("Gender")`                    |
-| `getByPlaceholder()` | Placeholder d'un champ         | `page.getByPlaceholder("Password")`            |
-| `getByRole()`        | Rôle + nom accessible          | `page.getByRole("button", { name: "Submit" })` |
-| `getByText()`        | Texte affiché                  | `page.getByText("Success!")`                   |
+La stratégie utilisée peut dépendre des pratiques de l'entreprise.
 
-Les GetBy locators rendent généralement les tests plus lisibles et plus proches du comportement réel de l'utilisateur.
+| Locator              | Utilisation                     | Exemple                                        |
+| -------------------- | ------------------------------- | ---------------------------------------------- |
+| `locator()`          | CSS, XPath ou locator classique | `page.locator(".card-body")`                   |
+| `getByLabel()`       | Label associé à un contrôle     | `page.getByLabel("Gender")`                    |
+| `getByPlaceholder()` | Placeholder d'un champ          | `page.getByPlaceholder("Password")`            |
+| `getByRole()`        | Rôle + nom accessible           | `page.getByRole("button", { name: "Submit" })` |
+| `getByText()`        | Texte affiché                   | `page.getByText("Success!")`                   |
+
+### Pourquoi utiliser les GetBy locators ?
+
+Les GetBy locators permettent généralement d'obtenir des tests :
+
+* plus lisibles ;
+* plus descriptifs ;
+* plus proches du comportement réel de l'utilisateur.
 
 ---
 
-# 3. `getByLabel()`
+# 🏷️ `getByLabel()`
 
-`getByLabel()` permet de cibler un contrôle de formulaire associé à un `<label>`.
+`getByLabel()` permet de cibler un contrôle de formulaire associé à un élément `<label>`.
 
 Le cours l'utilise notamment pour :
 
@@ -79,27 +86,39 @@ Le cours l'utilise notamment pour :
 * un radio button ;
 * un dropdown.
 
+### Exemple
+
 ```javascript
-await page.getByLabel("Check me out if you Love IceCreams!").check();
+await page
+    .getByLabel("Check me out if you Love IceCreams!")
+    .check();
 
-await page.getByLabel("Employed").check();
+await page
+    .getByLabel("Employed")
+    .check();
 
-await page.getByLabel("Gender").selectOption("Female");
+await page
+    .getByLabel("Gender")
+    .selectOption("Female");
 ```
 
-> **À retenir :** `selectOption()` s'applique ici au dropdown HTML `<select>`.
+> 💡 **À retenir :** `selectOption()` s'applique ici à un dropdown HTML `<select>`.
 
 ---
 
-# 4. `getByPlaceholder()`
+# 🔤 `getByPlaceholder()`
 
-`getByPlaceholder()` cible un champ grâce à son attribut `placeholder`.
+`getByPlaceholder()` permet de cibler un champ grâce à son attribut `placeholder`.
+
+### Exemple
 
 ```javascript
-await page.getByPlaceholder("Password").fill("abc123");
+await page
+    .getByPlaceholder("Password")
+    .fill("abc123");
 ```
 
-Autres exemples :
+### Autres exemples
 
 ```javascript
 await page
@@ -113,45 +132,59 @@ await page
     .fill("Iamking@000");
 ```
 
-Cette approche est notamment utilisée dans la réécriture E2E du cours.
+Cette approche est notamment utilisée dans la réécriture du test E2E du cours.
 
 ---
 
-# 5. `getByRole()`
+# 🎭 `getByRole()`
 
-`getByRole()` permet de cibler un élément par son **rôle**, puis éventuellement par son **nom accessible**.
+`getByRole()` permet de cibler un élément grâce à son **rôle**, puis éventuellement grâce à son **nom accessible**.
+
+### Exemples
 
 ```javascript
-await page.getByRole("button", { name: "Submit" }).click();
+await page
+    .getByRole("button", { name: "Submit" })
+    .click();
 
-await page.getByRole("link", { name: "Shop" }).click();
+await page
+    .getByRole("link", { name: "Shop" })
+    .click();
 
-await page.getByRole("button", { name: "Login" }).click();
+await page
+    .getByRole("button", { name: "Login" })
+    .click();
 
-await page.getByRole("button", { name: "Checkout" }).click();
+await page
+    .getByRole("button", { name: "Checkout" })
+    .click();
 ```
 
 ## Pourquoi utiliser `name` ?
 
 Le paramètre `name` permet de rendre le locator plus précis lorsqu'il existe plusieurs éléments ayant le même rôle.
 
-Par exemple :
-
-```javascript
-page.getByRole("button", { name: "Login" })
-```
-
-est plus précis que :
+### Moins précis
 
 ```javascript
 page.getByRole("button")
 ```
 
+### Plus précis
+
+```javascript
+page.getByRole("button", { name: "Login" })
+```
+
+> 💡 **Bonne pratique :** lorsque plusieurs éléments possèdent le même rôle, utiliser `name` permet de mieux identifier l'élément attendu.
+
 ---
 
-# 6. `getByText()`
+# 📝 `getByText()`
 
 `getByText()` permet de retrouver un élément à partir du texte qu'il affiche.
+
+### Exemple
 
 ```javascript
 await expect(
@@ -161,7 +194,7 @@ await expect(
 ).toBeVisible();
 ```
 
-Autres exemples :
+### Autres exemples
 
 ```javascript
 await expect(
@@ -175,7 +208,7 @@ await expect(
 ).toBeVisible();
 ```
 
-Les notes utilisent `getByText()` notamment pour :
+Dans les exemples du cours, `getByText()` est notamment utilisé pour :
 
 * les messages de succès ;
 * le produit dans le panier ;
@@ -183,11 +216,11 @@ Les notes utilisent `getByText()` notamment pour :
 
 ---
 
-# 7. `filter()` et chaining
+# 🔗 `filter()` et chaining
 
 `filter()` permet de réduire un ensemble d'éléments selon un critère.
 
-Il est particulièrement utile lorsqu'on veut :
+Cette méthode est particulièrement utile lorsqu'on souhaite :
 
 1. trouver un composant parmi plusieurs ;
 2. identifier ce composant grâce à son texte ;
@@ -196,22 +229,24 @@ Il est particulièrement utile lorsqu'on veut :
 ## Exemple
 
 ```javascript
-await page.locator("app-card")
+await page
+    .locator("app-card")
     .filter({ hasText: "iphone X" })
     .getByRole("button")
     .click();
 ```
 
-Autre exemple :
+### Exemple avec un produit
 
 ```javascript
-await page.locator(".card-body")
+await page
+    .locator(".card-body")
     .filter({ hasText: "ADIDAS ORIGINAL" })
     .getByRole("button", { name: "Add To Cart" })
     .click();
 ```
 
-### Décomposition
+## Décomposition
 
 ```text
 .card-body
@@ -225,15 +260,21 @@ getByRole("button", { name: "Add To Cart" })
 Bouton Add To Cart
 ```
 
-> **Bonne pratique :** filtrer le composant parent avant de rechercher le bouton ou l'élément enfant.
+> 💡 **Bonne pratique :** filtrer le composant parent avant de rechercher le bouton ou l'élément enfant.
 
 ---
 
-# 8. Playwright UI Runner
+# 🖥️ Playwright UI Runner
 
 Le **UI Runner** permet d'exécuter et d'observer les tests dans une interface graphique.
 
-Pour le lancer :
+Il est particulièrement utile pendant :
+
+* l'apprentissage ;
+* l'exploration des tests ;
+* le débogage.
+
+## Lancer le UI Runner
 
 ```bash
 npx playwright test --ui
@@ -245,7 +286,9 @@ Une autre syntaxe possible :
 node ./node_modules/@playwright/test/cli.js test --ui
 ```
 
-## Créer un script npm
+---
+
+## Ajouter un script npm
 
 Dans `package.json` :
 
@@ -263,13 +306,11 @@ Puis :
 npm test
 ```
 
-Le UI Runner est particulièrement utile pendant l'apprentissage et le débogage.
-
 ---
 
-# 9. Réécriture d'un test E2E avec GetBy
+# 🧪 Test E2E avec GetBy
 
-Voici un scénario complet utilisant plusieurs GetBy locators :
+Voici un scénario complet utilisant plusieurs types de locators :
 
 ```javascript
 import { expect, test } from '@playwright/test';
@@ -353,7 +394,9 @@ test("Client App - GetBy Locators", async ({ page }) => {
 });
 ```
 
-## Déroulement du scénario
+---
+
+## 🔄 Déroulement du scénario
 
 ```text
 Login
@@ -379,9 +422,24 @@ Place Order
 Vérifier la confirmation
 ```
 
+### Locators utilisés dans ce test
+
+| Étape                | Locator                  |
+| -------------------- | ------------------------ |
+| Email                | `getByPlaceholder()`     |
+| Password             | `getByPlaceholder()`     |
+| Login                | `getByRole()`            |
+| Produit              | `locator()` + `filter()` |
+| Add To Cart          | `getByRole()`            |
+| Cart                 | `getByRole()`            |
+| Vérification produit | `getByText()`            |
+| Checkout             | `getByRole()`            |
+| Pays                 | `getByPlaceholder()`     |
+| Confirmation         | `getByText()`            |
+
 ---
 
-# 10. Limites de `getByLabel()`
+# 🏷️ Limites de `getByLabel()`
 
 `getByLabel()` fonctionne lorsque le champ est correctement associé au label.
 
@@ -411,11 +469,11 @@ Deux structures sont notamment possibles.
 
 Dans les deux cas, le label est correctement relié au contrôle.
 
-> **Important :** si cette relation n'existe pas dans le HTML, il ne faut pas supposer que `getByLabel()` fonctionnera.
+> ⚠️ **Important :** si cette relation n'existe pas dans le HTML, il ne faut pas supposer que `getByLabel()` fonctionnera.
 
 ---
 
-# 11. Automatiser un calendrier
+# 📅 Automatiser un calendrier
 
 Le cours utilise le calendrier disponible sur :
 
@@ -439,7 +497,7 @@ await page.goto(
 
 ---
 
-## 11.1 Ouvrir le calendrier
+## Ouvrir le calendrier
 
 ```javascript
 await page
@@ -449,9 +507,9 @@ await page
 
 ---
 
-## 11.2 Aller à la sélection de l'année
+## Sélectionner l'année
 
-Le cours clique deux fois sur le bouton de navigation :
+Le cours clique deux fois sur le bouton de navigation afin d'accéder à la sélection des années :
 
 ```javascript
 await page
@@ -463,12 +521,12 @@ await page
     .click();
 ```
 
----
-
-## 11.3 Sélectionner l'année
+### Choisir l'année
 
 ```javascript
-await page.getByText(year).click();
+await page
+    .getByText(year)
+    .click();
 ```
 
 Avec :
@@ -485,31 +543,32 @@ Playwright recherche donc le texte :
 
 ---
 
-## 11.4 Sélectionner le mois
+## Sélectionner le mois
 
-Le cours rappelle que :
+Le cours utilise :
 
-```text
-month = 7
+```javascript
+const month = "7";
 ```
 
-correspond à **juillet**.
+Ici, `7` correspond à **juillet**.
 
-Mais `nth()` commence à **0**.
+Cependant, `nth()` commence à `0`.
 
-Donc :
-
-```text
-Janvier   → nth(0)
-Février   → nth(1)
-Mars      → nth(2)
-Avril     → nth(3)
-Mai       → nth(4)
-Juin      → nth(5)
-Juillet   → nth(6)
-...
-Décembre  → nth(11)
-```
+| Mois      | Index `nth()` |
+| --------- | ------------: |
+| Janvier   |      `nth(0)` |
+| Février   |      `nth(1)` |
+| Mars      |      `nth(2)` |
+| Avril     |      `nth(3)` |
+| Mai       |      `nth(4)` |
+| Juin      |      `nth(5)` |
+| Juillet   |      `nth(6)` |
+| Août      |      `nth(7)` |
+| Septembre |      `nth(8)` |
+| Octobre   |      `nth(9)` |
+| Novembre  |     `nth(10)` |
+| Décembre  |     `nth(11)` |
 
 On utilise donc :
 
@@ -536,11 +595,13 @@ Donc :
 nth(6)
 ```
 
-correspond au septième élément, c'est-à-dire juillet.
+correspond au **septième élément**, c'est-à-dire juillet.
+
+> 💡 **À retenir :** les index Playwright sont **zero-based**.
 
 ---
 
-## 11.5 Sélectionner le jour
+## Sélectionner le jour
 
 Le cours utilise XPath :
 
@@ -562,13 +623,13 @@ le locator devient :
 //abbr[text()='7']
 ```
 
-> **Remarque :** les notes indiquent qu'un locator CSS basé sur les classes du bouton du calendrier ne fonctionnait pas dans cet exemple. Le cours utilise donc cet XPath.
+> ⚠️ **Remarque :** les notes indiquent qu'un locator CSS basé sur les classes du bouton du calendrier ne fonctionnait pas dans cet exemple. Le cours utilise donc cet XPath.
 
 ---
 
-# 12. Valider la date
+# ✅ Valider la date
 
-Après la sélection, le cours lit les trois inputs du date picker et compare leurs valeurs aux valeurs attendues.
+Après la sélection, le cours lit les trois inputs du date picker et compare leurs valeurs avec les valeurs attendues.
 
 ```javascript
 const expectedList = [month, day, year];
@@ -587,6 +648,8 @@ for (let i = 0; i < expectedList.length; i++) {
 }
 ```
 
+---
+
 ## `inputValue()`
 
 `inputValue()` permet de lire la valeur d'un élément `<input>`.
@@ -594,6 +657,8 @@ for (let i = 0; i < expectedList.length; i++) {
 ```javascript
 const value = await locator.inputValue();
 ```
+
+---
 
 ## `expect().toEqual()`
 
@@ -606,14 +671,14 @@ expect(value).toEqual(expectedValue);
 Dans notre exemple :
 
 ```text
-Valeur du mois  → 7
-Valeur du jour  → 7
-Valeur année    → 2026
+Mois  → 7
+Jour  → 7
+Année → 2026
 ```
 
 ---
 
-# 13. Exemple complet : calendrier
+# 🧩 Exemple complet : calendrier
 
 ```javascript
 import { expect, test } from '@playwright/test';
@@ -680,17 +745,25 @@ test("Calendar validations", async ({ page }) => {
 
 ---
 
-# 14. Pièges et bonnes pratiques
+# ⚠️ Pièges et bonnes pratiques
 
-### `getByLabel()`
+## `getByLabel()`
 
 Vérifier que le label est réellement associé au contrôle.
 
-### `getByPlaceholder()`
+---
 
-Le placeholder doit correspondre exactement au champ visé.
+## `getByPlaceholder()`
 
-### `getByRole()`
+Le placeholder doit correspondre au champ visé.
+
+```javascript
+page.getByPlaceholder("Password")
+```
+
+---
+
+## `getByRole()`
 
 Utiliser `name` pour désambiguïser les éléments ayant le même rôle.
 
@@ -698,11 +771,19 @@ Utiliser `name` pour désambiguïser les éléments ayant le même rôle.
 page.getByRole("button", { name: "Login" })
 ```
 
-### `getByText()`
+---
+
+## `getByText()`
 
 Utiliser un texte suffisamment stable pour éviter les locators fragiles.
 
-### `filter()`
+```javascript
+page.getByText("Success!")
+```
+
+---
+
+## `filter()`
 
 Filtrer le composant parent avant de chercher son bouton ou un autre élément enfant.
 
@@ -712,7 +793,9 @@ locator(".card")
     .getByRole("button")
 ```
 
-### `nth()`
+---
+
+## `nth()`
 
 Le premier élément est :
 
@@ -726,11 +809,21 @@ et non :
 nth(1)
 ```
 
-### Calendrier
+> 💡 Les index commencent à **0**.
+
+---
+
+## 📅 Calendrier
 
 La stratégie XPath utilisée dans le cours dépend de la structure HTML spécifique de ce calendrier.
 
-### Attentes
+```javascript
+locator("//abbr[text()='" + day + "']")
+```
+
+---
+
+## ⏳ Attentes
 
 Dans le scénario client, le cours utilise :
 
@@ -741,10 +834,15 @@ await page.waitForLoadState("networkidle");
 puis attend le premier titre produit :
 
 ```javascript
-await page.locator(".card-body b").first().waitFor();
+await page
+    .locator(".card-body b")
+    .first()
+    .waitFor();
 ```
 
-### UI Runner
+---
+
+## 🖥️ UI Runner
 
 Pendant l'apprentissage et le débogage :
 
@@ -754,50 +852,112 @@ npx playwright test --ui
 
 ---
 
-# 15. Exercices d'entraînement
+# 🏋️ Exercices
 
-1. Réécrire un locator CSS de champ en `getByLabel()`.
-2. Réécrire un champ avec `getByPlaceholder()`.
-3. Réécrire un bouton avec `getByRole()`.
-4. Réécrire une vérification de message avec `getByText()`.
-5. Créer un locator avec `locator().filter({ hasText: ... }).getByRole(...)`.
-6. Changer le produit `ADIDAS ORIGINAL` par un autre produit dans le test E2E.
-7. Modifier le pays recherché dans le checkout.
-8. Choisir une autre année dans le calendrier.
-9. Choisir un autre mois et vérifier le calcul de l'index.
-10. Ajouter une assertion supplémentaire après la sélection du jour.
-11. Lancer le test avec :
+### Exercice 1 — `getByLabel()`
+
+Réécrire un locator CSS de champ en utilisant :
+
+```javascript
+getByLabel()
+```
+
+### Exercice 2 — `getByPlaceholder()`
+
+Réécrire un champ avec :
+
+```javascript
+getByPlaceholder()
+```
+
+### Exercice 3 — `getByRole()`
+
+Réécrire un bouton avec :
+
+```javascript
+getByRole()
+```
+
+### Exercice 4 — `getByText()`
+
+Réécrire une vérification de message avec :
+
+```javascript
+getByText()
+```
+
+### Exercice 5 — `filter()`
+
+Créer un locator utilisant :
+
+```javascript
+locator()
+    .filter({ hasText: ... })
+    .getByRole(...)
+```
+
+### Exercice 6 — Produit
+
+Changer le produit :
+
+```text
+ADIDAS ORIGINAL
+```
+
+par un autre produit dans le test E2E.
+
+### Exercice 7 — Pays
+
+Modifier le pays recherché dans le checkout.
+
+### Exercice 8 — Année
+
+Choisir une autre année dans le calendrier.
+
+### Exercice 9 — Mois
+
+Choisir un autre mois et vérifier le calcul de l'index.
+
+### Exercice 10 — Assertion
+
+Ajouter une assertion supplémentaire après la sélection du jour.
+
+### Exercice 11 — UI Runner
+
+Lancer :
 
 ```bash
 npx playwright test --ui
 ```
 
-et observer les différentes étapes.
+et observer les différentes étapes du test.
 
 ---
 
-# 16. Fiche mémo
+# 📝 Fiche mémo
 
-| Besoin           | Syntaxe                                           |
-| ---------------- | ------------------------------------------------- |
-| Label            | `page.getByLabel("Gender")`                       |
-| Placeholder      | `page.getByPlaceholder("Password")`               |
-| Role + nom       | `page.getByRole("button", { name: "Submit" })`    |
-| Texte            | `page.getByText("Success!")`                      |
-| Filtrer          | `locator(".card").filter({ hasText: "Product" })` |
-| Premier          | `locator.first()`                                 |
-| Index            | `locator.nth(i)`                                  |
-| Select           | `locator.selectOption("Female")`                  |
-| Lire input       | `await locator.inputValue()`                      |
-| Visible          | `await expect(locator).toBeVisible()`             |
-| UI Runner        | `npx playwright test --ui`                        |
-| Pause            | `await page.pause()`                              |
-| Attendre réseau  | `await page.waitForLoadState("networkidle")`      |
-| Attendre locator | `await locator.waitFor()`                         |
+| Besoin              | Syntaxe                                           |
+| ------------------- | ------------------------------------------------- |
+| Label               | `page.getByLabel("Gender")`                       |
+| Placeholder         | `page.getByPlaceholder("Password")`               |
+| Role + nom          | `page.getByRole("button", { name: "Submit" })`    |
+| Texte               | `page.getByText("Success!")`                      |
+| Filtrer             | `locator(".card").filter({ hasText: "Product" })` |
+| Premier             | `locator.first()`                                 |
+| Index               | `locator.nth(i)`                                  |
+| Select              | `locator.selectOption("Female")`                  |
+| Lire un input       | `await locator.inputValue()`                      |
+| Visible             | `await expect(locator).toBeVisible()`             |
+| UI Runner           | `npx playwright test --ui`                        |
+| Pause               | `await page.pause()`                              |
+| Attendre le réseau  | `await page.waitForLoadState("networkidle")`      |
+| Attendre un locator | `await locator.waitFor()`                         |
 
 ---
 
-# 17. Checklist de validation
+# ☑️ Checklist
+
+Avant de considérer ce chapitre comme maîtrisé :
 
 * [ ] Je comprends le rôle d'un locator.
 * [ ] Je sais utiliser `getByLabel()`.
@@ -808,18 +968,21 @@ et observer les différentes étapes.
 * [ ] Je comprends le chaining de locators.
 * [ ] Je sais utiliser `filter({ hasText: ... })`.
 * [ ] Je sais lancer le UI Runner.
-* [ ] Je sais sélectionner une année, un mois et un jour dans le calendrier du cours.
-* [ ] Je comprends pourquoi le mois 7 correspond à `nth(6)`.
+* [ ] Je sais sélectionner une année dans le calendrier.
+* [ ] Je sais sélectionner un mois dans le calendrier.
+* [ ] Je sais sélectionner un jour dans le calendrier.
+* [ ] Je comprends pourquoi le mois `7` correspond à `nth(6)`.
+* [ ] Je comprends que `nth()` est zero-based.
 * [ ] Je sais lire un input avec `inputValue()`.
 * [ ] Je sais valider une valeur avec `expect().toEqual()`.
 
 ---
 
-# Conclusion
+# 🎓 Conclusion
 
-Le chapitre 5 fait passer d'une recherche principalement basée sur les sélecteurs CSS à une approche plus descriptive avec les **GetBy locators**.
+Le chapitre 5 fait évoluer l'utilisation des locators Playwright vers une approche plus **descriptive et lisible** avec les **GetBy locators**.
 
-Les concepts à maîtriser sont :
+Les principales méthodes étudiées sont :
 
 * `getByLabel()`
 * `getByRole()`
@@ -828,12 +991,74 @@ Les concepts à maîtriser sont :
 * `filter()`
 * le **chaining**
 
-La partie calendrier ajoute une compétence importante : **décomposer un composant complexe en plusieurs étapes**, puis valider le résultat avec `inputValue()` et des assertions.
+La partie calendrier ajoute une compétence importante : savoir **décomposer un composant complexe en plusieurs étapes**, puis vérifier que le résultat obtenu correspond à la valeur attendue.
 
-## Les 5 notions essentielles
+La validation repose notamment sur :
 
-1. **`getByRole()` + `name`** pour cibler précisément les boutons et les liens.
-2. **`getByLabel()`** pour les contrôles associés à un label.
-3. **`getByPlaceholder()`** pour les champs identifiés par leur placeholder.
-4. **`filter({ hasText: ... })`** pour cibler un composant dans une collection.
-5. **`nth()` est zéro-based** et `inputValue()` permet de lire la valeur d'un input.
+```javascript
+inputValue()
+```
+
+et :
+
+```javascript
+expect().toEqual()
+```
+
+---
+
+## ⭐ Les 5 notions essentielles à retenir
+
+### 1. `getByRole()` + `name`
+
+Pour cibler précisément les boutons et les liens.
+
+```javascript
+page.getByRole("button", { name: "Login" })
+```
+
+### 2. `getByLabel()`
+
+Pour les contrôles associés à un label.
+
+```javascript
+page.getByLabel("Gender")
+```
+
+### 3. `getByPlaceholder()`
+
+Pour les champs identifiés par leur placeholder.
+
+```javascript
+page.getByPlaceholder("Password")
+```
+
+### 4. `filter({ hasText: ... })`
+
+Pour cibler un composant précis dans une collection.
+
+```javascript
+locator(".card")
+    .filter({ hasText: "Product" })
+    .getByRole("button")
+```
+
+### 5. `nth()` + `inputValue()`
+
+`nth()` est **zero-based** :
+
+```text
+nth(0) → premier élément
+nth(1) → deuxième élément
+nth(2) → troisième élément
+```
+
+Et `inputValue()` permet de lire la valeur d'un input :
+
+```javascript
+const value = await locator.inputValue();
+```
+
+---
+
+> 🚀 **À retenir :** de bons locators rendent les tests Playwright plus lisibles, plus compréhensibles et plus proches de la manière dont un utilisateur interagit avec l'application.
