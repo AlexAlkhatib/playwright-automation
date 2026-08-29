@@ -1,80 +1,135 @@
 import { expect, test, request } from '@playwright/test';
-const loginPayLoad = 
-{
+
+const loginPayload = {
     userEmail: "anshika@gmail.com",
     userPassword: "Iamking@000"
 };
+
+const orderPayload = {
+    orders: [
+        {
+            country: "France",
+            productOrderId: "6a92a86b21054ba465fbb376"
+        }
+    ]
+};
+
 let token;
+let orderId;
 
 test.beforeAll(async () => {
-    // create a request context
     const apiContext = await request.newContext();
 
-    // make a POST call for login
-    const loginResponse = await apiContext.post("https://rahulshettyacademy.com/api/ecom/auth/login",
+    // =========================
+    // Login API
+    // =========================
+    const loginResponse = await apiContext.post(
+        "https://rahulshettyacademy.com/api/ecom/auth/login",
         {
-            data: loginPayLoad
+            data: loginPayload
         }
     );
 
-    // expect login response to be ok
     expect(loginResponse.ok()).toBeTruthy();
 
-    // if the login response is ok, then grab the token variable
     const loginResponseJson = await loginResponse.json();
     token = loginResponseJson.token;
 
-    // print the token
-    console.log(token);
+    console.log("Token:", token);
+
+    // =========================
+    // Create Order API
+    // =========================
+    const orderResponse = await apiContext.post(
+        "https://rahulshettyacademy.com/api/ecom/order/create-order",
+        {
+            data: orderPayload,
+            headers: {
+                Authorization: token,
+                "Content-Type": "application/json"
+            }
+        }
+    );
+
+    expect(orderResponse.ok()).toBeTruthy();
+
+    const orderResponseJson = await orderResponse.json();
+    orderId = orderResponseJson.orders[0];
+
+    console.log("Order ID:", orderId);
+
+    await apiContext.dispose();
 });
 
-test.beforeEach(() => {
-    
-});
+test("Client App", async ({ page }) => {
 
-test("Client App Other Way", async ({ page }) => {
-    //Insert the token into the page
-    page.addInitScript(value => {
+    // =========================
+    // Inject token into browser
+    // =========================
+    await page.addInitScript((value) => {
         window.localStorage.setItem("token", value);
     }, token);
 
-    // Go the web page
+    // =========================
+    // Open application
+    // =========================
     await page.goto("https://rahulshettyacademy.com/client/");
 
-    // Wait until the card body is loaded
+    // Wait for products to load
     await page.locator(".card-body b").first().waitFor();
 
-    // Locate all products and filter by the product name
-    await page.locator(".card-body").filter({hasText: "ADIDAS ORIGINAL"}).getByRole("button", {name: "Add To Cart"}).click();
+    // =========================
+    // Add Adidas product
+    // =========================
+    await page
+        .locator(".card-body")
+        .filter({ hasText: "ADIDAS ORIGINAL" })
+        .getByRole("button", { name: "Add To Cart" })
+        .click();
 
-    // Click the cart button
-    await page.getByRole("listitem").getByRole("button", {name: "Cart"}).click();
+    // =========================
+    // Go to Cart
+    // =========================
+    await page
+        .getByRole("listitem")
+        .getByRole("button", { name: "Cart" })
+        .click();
 
-    // Wait until the product is available in hte cart
-    await page.locator("h3:has-text('ADIDAS ORIGINAL')").waitFor();
+    // Verify product is in cart
+    await expect(
+        page.getByText("ADIDAS ORIGINAL")
+    ).toBeVisible();
 
-    // Check if the product is visible in the cart
-    // await expect(page.locator("h3:has-text('ADIDAS ORIGINAL')").isVisible()).toBeTruthy();
-    await expect(page.getByText("ADIDAS ORIGINAL")).toBeVisible();
+    // =========================
+    // Checkout
+    // =========================
+    await page
+        .getByRole("button", { name: "Checkout" })
+        .click();
 
-    // Click the checkout button page.locator("[type='button']").last().click();
-    // await page.locator("text=Checkout").click();
-    await page.getByRole("button", {name: "Checkout"}).click();
+    // =========================
+    // Select France
+    // =========================
+    await page
+        .getByPlaceholder("Select Country")
+        .pressSequentially("Fra", { delay: 100 });
 
-    // Select country
-    // await page.locator("[placeholder*='Country']").pressSequentially("Fra", {delay:100});
-    await page.getByPlaceholder("Select Country").pressSequentially("Fra", {delay:100});
-
-    // Locate country options wait for results
     await page.locator(".ta-results").waitFor();
 
-    // Select France and check the option
-    await page.getByRole("button", {name: "Fra"}).nth(0).click();
+    await page
+        .getByRole("button", { name: "Fra" })
+        .first()
+        .click();
 
-    // Click on the place order button
+    // =========================
+    // Place Order
+    // =========================
     await page.getByText("PLACE ORDER").click();
 
-    // Make sure that the page has a message like "Thank you for the order"
-    // Or bool = text.contains(message) expect to be truthy
-    await expect(page.getByText("Thankyou for the order.")).toBeVisible();
+    // =========================
+    // Verify confirmation
+    // =========================
+    await expect(
+        page.getByText("Thankyou for the order.")
+    ).toBeVisible();
 });
