@@ -1,115 +1,189 @@
-# 📘 Playwright — Chapitre 4
+# 🎭 Playwright — Chapitre 4
+
 ## End-to-End Web Automation Practice
 
 **Login • Produits dynamiques • Panier • Checkout • Autocomplete • Commande • Order History**
 
-> Documentation d’apprentissage basée sur les notes du cours fournies.
+> Documentation construite à partir des notes du cours.
+
+> Elle reprend la progression et les exemples du chapitre, puis ajoute des explications pédagogiques pour faciliter l’apprentissage.
+
+> **Complément pédagogique :** les explications qui ne figurent pas explicitement dans les notes du cours sont signalées comme telles.
 
 ---
 
-## À propos de ce chapitre
+## Sommaire
 
-Ce chapitre met en pratique plusieurs concepts Playwright dans un véritable scénario **End-to-End**.
-
-Le parcours couvre :
-
-* le login ;
-* la recherche dynamique d'un produit ;
-* l'ajout au panier ;
-* le checkout ;
-* la sélection d'un pays ;
-* la création de la commande ;
-* la récupération de l'**Order ID** ;
-* la recherche de cette commande dans l'**Order History**.
-
-L'objectif est de construire un test capable de transporter des données d'une étape à l'autre, de gérer des interfaces dynamiques et de vérifier le résultat final.
-
----
-
-# Sommaire
-
-1. Objectifs
-2. Scénario E2E
-3. Login
-4. Synchronisation après login
-5. Recherche dynamique d'un produit
-6. `count()`, `nth()` et boucles
-7. Ajouter au panier
-8. Vérifier le panier
-9. Dropdown autocomplete
-10. `pressSequentially()` et `delay`
-11. Checkout et assertions
-12. Récupérer l'Order ID
-13. Order History
-14. Vérifier les détails
-15. Exemple complet
-16. Concepts Playwright
-17. Erreurs et bonnes pratiques
-18. Exercices
-19. Fiche mémo
-20. Checklist
+1. [Objectifs du chapitre](#1-objectifs-du-chapitre)
+2. [Le scénario End-to-End](#2-le-scénario-end-to-end)
+3. [Login](#3-login)
+4. [Synchronisation après le login](#4-synchronisation-après-le-login)
+5. [Recherche dynamique d’un produit](#5-recherche-dynamique-dun-produit)
+6. [`count()`, `nth()` et les boucles](#6-count-nth-et-les-boucles)
+7. [Ajouter un produit au panier](#7-ajouter-un-produit-au-panier)
+8. [Vérifier le panier](#8-vérifier-le-panier)
+9. [Le dropdown autocomplete](#9-le-dropdown-autocomplete)
+10. [`pressSequentially()` et `delay`](#10-presssequentially-et-delay)
+11. [Checkout et assertions](#11-checkout-et-assertions)
+12. [Récupérer l’Order ID](#12-récupérer-lorder-id)
+13. [Order History](#13-order-history)
+14. [Vérifier les détails de la commande](#14-vérifier-les-détails-de-la-commande)
+15. [Exemple complet du chapitre](#15-exemple-complet-du-chapitre)
+16. [Concepts Playwright mobilisés](#16-concepts-playwright-mobilisés)
+17. [Pattern : parcourir une collection dynamique](#17-pattern-parcourir-une-collection-dynamique)
+18. [Erreurs et points d’attention](#18-erreurs-et-points-dattention)
+19. [Exercices conseillés](#19-exercices-conseillés)
+20. [Mémo des concepts](#20-mémo-des-concepts)
+21. [Checklist d’apprentissage](#21-checklist-dapprentissage)
+22. [Résumé final](#22-résumé-final)
+23. [Transition vers le chapitre suivant](#23-transition-vers-le-chapitre-suivant)
 
 ---
 
-# 1. Objectifs
+# 1. Objectifs du chapitre
 
-À la fin de ce chapitre, je dois être capable de :
+À la fin de ce chapitre, vous serez capable de :
 
-* Construire un test End-to-End réaliste.
-* Rechercher un produit dynamiquement.
-* Parcourir une collection de locators avec `count()` et `nth()`.
+* Construire un véritable scénario **End-to-End** avec Playwright.
+* Réutiliser des données entre différentes étapes d’un scénario.
+* Rechercher dynamiquement un produit dans une collection.
+* Utiliser `count()` pour connaître le nombre d’éléments.
+* Utiliser `nth()` pour accéder à un élément précis d’une collection.
+* Parcourir une collection avec une boucle `for`.
+* Limiter une action au contexte de l’élément actuellement recherché.
 * Synchroniser le test avec une interface dynamique.
-* Gérer un autocomplete.
-* Ajouter des assertions après les actions importantes.
-* Capturer une donnée dynamique comme l'Order ID.
-* Rechercher cette donnée dans une table d'historique.
+* Manipuler un champ **autocomplete**.
+* Utiliser `pressSequentially()` pour simuler une saisie progressive.
+* Comprendre le rôle de `delay` dans une saisie dynamique.
+* Ajouter des assertions après les étapes importantes.
+* Capturer une donnée générée dynamiquement comme un **Order ID**.
+* Réutiliser cet identifiant pour retrouver une commande dans l’historique.
+* Vérifier que les détails affichés correspondent à la commande créée.
+
+Le chapitre marque donc une évolution importante :
+
+```text
+Tests simples
+
+      ↓
+
+Interactions avec la page
+
+      ↓
+
+Collections dynamiques
+
+      ↓
+
+Données transportées entre les étapes
+
+      ↓
+
+Workflow End-to-End complet
+```
 
 ---
 
-# 2. Scénario E2E
+# 2. Le scénario End-to-End
 
-Le scénario global est le suivant :
+Le scénario étudié simule le parcours complet d’un utilisateur dans une application e-commerce.
+
+Le workflow général est :
 
 ```text
 Login
-  ↓
-Sélectionner un produit
-  ↓
+
+   ↓
+
+Charger les produits
+
+   ↓
+
+Rechercher un produit
+
+   ↓
+
 Ajouter au panier
-  ↓
+
+   ↓
+
 Ouvrir le panier
-  ↓
+
+   ↓
+
+Vérifier le produit
+
+   ↓
+
 Checkout
-  ↓
-Saisir les informations
-  ↓
+
+   ↓
+
+Saisir / sélectionner les informations
+
+   ↓
+
 Sélectionner le pays
-  ↓
+
+   ↓
+
 Valider la commande
-  ↓
-Récupérer l'Order ID
-  ↓
+
+   ↓
+
+Récupérer l’Order ID
+
+   ↓
+
 Ouvrir Order History
-  ↓
+
+   ↓
+
 Rechercher la commande
-  ↓
+
+   ↓
+
 Afficher les détails
-  ↓
-Vérifier l'Order ID
+
+   ↓
+
+Vérifier l’Order ID
 ```
 
 Le scénario général mentionne également :
 
-* l'application d'un coupon ;
+* l’application d’un coupon ;
 * le paiement.
 
 Cependant, ces deux étapes ne sont pas entièrement implémentées dans les extraits fournis.
+
+> **Complément pédagogique :** ce scénario illustre une caractéristique importante des tests E2E : une donnée produite à une étape peut devenir l’entrée d’une étape ultérieure.
+
+Par exemple :
+
+```text
+Login
+  ↓
+email
+  ↓
+Checkout
+  ↓
+Order ID
+  ↓
+Order History
+  ↓
+Détails de la commande
+```
+
+Le test ne se contente donc plus de vérifier des actions isolées.
+
+Il vérifie la **continuité du parcours utilisateur**.
 
 ---
 
 # 3. Login
 
-On commence par ouvrir l'application et renseigner les identifiants.
+Le scénario commence par l’ouverture de l’application et la saisie des identifiants.
 
 ```javascript
 import { expect, test } from '@playwright/test';
@@ -134,26 +208,75 @@ test("Client App - E2E", async ({ page }) => {
     await page
         .locator("[value='Login']")
         .click();
+
 });
 ```
 
-## Pourquoi conserver l'email dans une variable ?
+Le test utilise ici directement la fixture :
 
-L'email sera réutilisé plus tard lors du checkout.
+```javascript
+{ page }
+```
+
+Playwright fournit automatiquement la page nécessaire au scénario.
+
+---
+
+## 3.1 Pourquoi conserver l’email dans une variable ?
+
+L’email est stocké dans une variable :
 
 ```javascript
 const email = "anshika@gmail.com";
 ```
 
-On pourra ensuite vérifier que l'email affiché au checkout correspond bien à celui utilisé lors du login.
+Cette donnée pourra être réutilisée plus tard.
+
+Par exemple, lors du checkout :
+
+```javascript
+await expect(
+    page
+        .locator(".user__name [type='text']")
+        .first()
+).toHaveText(email);
+```
+
+Le test vérifie alors que l’adresse affichée correspond à celle utilisée au début du scénario.
+
+On obtient donc :
+
+```text
+Login
+
+  ↓
+
+email
+
+  ↓
+
+Checkout
+
+  ↓
+
+email affiché
+
+  ↓
+
+expect(email)
+```
+
+> **Idée clé :** les variables permettent de transporter des données entre différentes étapes du test.
 
 ---
 
-# 4. Synchronisation après login
+# 4. Synchronisation après le login
 
 Après le login, les produits sont chargés dynamiquement.
 
-Le test attend donc qu'un produit soit disponible :
+Le test doit donc attendre qu’un élément nécessaire soit disponible avant de continuer.
+
+Une approche présentée dans le chapitre est :
 
 ```javascript
 await page
@@ -162,9 +285,53 @@ await page
     .waitFor();
 ```
 
-Le premier titre de produit sert de **repère de synchronisation**.
+Le premier titre de produit sert ici de **repère de synchronisation**.
 
-## Autre approche
+---
+
+## 4.1 Pourquoi attendre ?
+
+Sans synchronisation, le test pourrait essayer de parcourir les produits avant qu’ils soient disponibles.
+
+Le scénario deviendrait alors :
+
+```text
+Login
+
+  ↓
+
+Produits encore en chargement
+
+  ↓
+
+Recherche des produits
+
+  ↓
+
+Risque d'échec
+```
+
+Avec une attente :
+
+```text
+Login
+
+  ↓
+
+Attendre un produit
+
+  ↓
+
+Produits disponibles
+
+  ↓
+
+Recherche
+```
+
+---
+
+## 4.2 `waitForLoadState("networkidle")`
 
 Le support présente également :
 
@@ -172,43 +339,76 @@ Le support présente également :
 await page.waitForLoadState("networkidle");
 ```
 
-### Comparaison
+Cette instruction correspond à une attente plus globale liée à l’activité réseau.
+
+On peut comparer les deux approches :
 
 ```text
 waitForLoadState("networkidle")
+
         ↓
+
 Attente globale du réseau
 
+
 locator.waitFor()
+
         ↓
-Attente ciblée d'un élément nécessaire
+
+Attente ciblée d’un élément
 ```
 
-> **Bonne pratique :** lorsqu'un élément précis est nécessaire pour poursuivre le scénario, une attente ciblée est souvent plus pertinente qu'une attente globale du réseau.
+> **Complément pédagogique :** lorsqu’un élément précis est nécessaire pour poursuivre le scénario, une attente ciblée permet de décrire plus directement la condition utile au test.
 
 ---
 
-# 5. Recherche dynamique d'un produit
+# 5. Recherche dynamique d’un produit
 
-Le cours montre comment rechercher `ADIDAS ORIGINAL` sans dépendre de sa position dans la page.
+Le chapitre montre comment rechercher :
+
+```text
+ADIDAS ORIGINAL
+```
+
+sans dépendre de la position du produit dans la page.
+
+On récupère d’abord la collection :
 
 ```javascript
 const products = page.locator(".card-body");
+```
+
+Puis le nom recherché :
+
+```javascript
 const productName = "ADIDAS ORIGINAL";
+```
 
+On compte ensuite les produits :
+
+```javascript
 const productCount = await products.count();
+```
 
+Enfin, on parcourt la collection :
+
+```javascript
 for (let i = 0; i < productCount; i++) {
 
     const product = products.nth(i);
 
     const currentProductName =
-        await product.locator("b").textContent();
+        await product
+            .locator("b")
+            .textContent();
 
     if (currentProductName.includes(productName)) {
 
         await product
-            .getByRole("button", { name: "Add To Cart" })
+            .getByRole(
+                "button",
+                { name: "Add To Cart" }
+            )
             .click();
 
         break;
@@ -216,54 +416,77 @@ for (let i = 0; i < productCount; i++) {
 }
 ```
 
-## Logique
+---
 
-Le test :
+## 5.1 Décomposition
 
-1. récupère la collection de produits ;
-2. compte le nombre de produits ;
-3. parcourt chaque produit ;
-4. récupère son nom ;
-5. compare le nom avec le produit recherché ;
-6. clique sur `Add To Cart` si le produit correspond ;
-7. quitte la boucle avec `break`.
+Le test effectue les opérations suivantes :
+
+1. récupérer la collection de produits ;
+2. compter les produits ;
+3. parcourir chaque produit ;
+4. récupérer le nom du produit courant ;
+5. comparer ce nom avec le produit recherché ;
+6. cliquer sur `Add To Cart` si le produit correspond ;
+7. quitter la boucle avec `break`.
+
+Schéma :
 
 ```text
 Tous les produits
+
       ↓
+
     count()
+
       ↓
+
    Boucle for
+
       ↓
+
     nth(i)
+
       ↓
+
  Lire le nom
+
       ↓
-Comparer avec "ADIDAS ORIGINAL"
+
+Comparer avec
+"ADIDAS ORIGINAL"
+
       ↓
-   Correspond ?
-    ↙       ↘
-  Non       Oui
-   ↓         ↓
-Continuer   Add To Cart
-             ↓
-           break
+
+Correspond ?
+
+   ↙          ↘
+
+ Non          Oui
+
+  ↓             ↓
+
+Continuer    Add To Cart
+
+                ↓
+
+              break
 ```
 
-> **Idée clé :** on recherche le produit par son contenu métier plutôt que par une position fixe.
+> **Idée clé :** on recherche le produit selon son contenu métier plutôt que selon sa position dans la page.
 
 ---
 
-# 6. `count()`, `nth()` et boucles
+# 6. `count()`, `nth()` et les boucles
 
-Ces trois éléments sont particulièrement importants lorsqu'on travaille avec une collection dynamique.
+Ces trois notions sont essentielles lorsqu’on travaille avec une collection dynamique.
 
 | Méthode         | Rôle                                |
 | --------------- | ----------------------------------- |
-| `count()`       | Retourne le nombre d'éléments       |
-| `nth(i)`        | Sélectionne l'élément à l'index `i` |
+| `count()`       | Retourne le nombre d’éléments       |
+| `nth(i)`        | Sélectionne l’élément à l’index `i` |
 | `first()`       | Sélectionne le premier élément      |
-| `textContent()` | Lit le texte d'un élément           |
+| `textContent()` | Lit le texte d’un élément           |
 
 Exemple :
 
@@ -277,40 +500,92 @@ for (let i = 0; i < count; i++) {
     const product = products.nth(i);
 
     console.log(
-        await product.locator("b").textContent()
+        await product
+            .locator("b")
+            .textContent()
     );
+
 }
-```
-
-## Attention aux index
-
-Les index commencent à **0**.
-
-```text
-nth(0) → premier élément
-nth(1) → deuxième élément
-nth(2) → troisième élément
 ```
 
 ---
 
-# 7. Ajouter au panier
+## 6.1 Les index commencent à 0
 
-Une fois le produit trouvé, on recherche le bouton à l'intérieur du produit courant :
+Il faut retenir que les index commencent à **0**.
+
+```text
+nth(0) → premier élément
+
+nth(1) → deuxième élément
+
+nth(2) → troisième élément
+
+nth(3) → quatrième élément
+```
+
+> **Complément pédagogique :** c’est une convention classique dans beaucoup de langages de programmation et de structures de données.
+
+---
+
+# 7. Ajouter un produit au panier
+
+Une fois le produit trouvé, le bouton `Add To Cart` est recherché **à l’intérieur du produit courant** :
 
 ```javascript
 await product
-    .getByRole("button", { name: "Add To Cart" })
+    .getByRole(
+        "button",
+        { name: "Add To Cart" }
+    )
     .click();
 ```
 
-C'est important car plusieurs produits peuvent posséder un bouton `Add To Cart`.
+Cette notion est importante.
 
-On évite ainsi de cliquer sur le bouton d'un autre produit.
+La page peut contenir plusieurs boutons :
 
-## Variante
+```text
+Product A
+  └── Add To Cart
 
-Les notes présentent également :
+Product B
+  └── Add To Cart
+
+Product C
+  └── Add To Cart
+
+Product D
+  └── Add To Cart
+```
+
+Si l’on recherche globalement :
+
+```javascript
+page.getByRole(
+    "button",
+    { name: "Add To Cart" }
+);
+```
+
+plusieurs boutons peuvent correspondre.
+
+En revanche :
+
+```javascript
+product.getByRole(
+    "button",
+    { name: "Add To Cart" }
+);
+```
+
+limite la recherche au produit actuellement sélectionné.
+
+---
+
+## 7.1 Variante présentée dans les notes
+
+Une autre syntaxe est présentée :
 
 ```javascript
 await product
@@ -318,13 +593,20 @@ await product
     .click();
 ```
 
-La première approche avec `getByRole()` est toutefois plus descriptive.
+La version avec `getByRole()` est toutefois plus descriptive :
+
+```javascript
+product.getByRole(
+    "button",
+    { name: "Add To Cart" }
+);
+```
 
 ---
 
 # 8. Vérifier le panier
 
-Une fois le produit ajouté, on ouvre le panier :
+Après l’ajout du produit, le test ouvre le panier :
 
 ```javascript
 await page
@@ -332,7 +614,7 @@ await page
     .click();
 ```
 
-Puis on attend que le produit soit présent :
+On attend ensuite que le produit apparaisse :
 
 ```javascript
 await page
@@ -340,7 +622,7 @@ await page
     .waitFor();
 ```
 
-On vérifie ensuite sa visibilité :
+Puis on vérifie sa visibilité :
 
 ```javascript
 const visible =
@@ -351,58 +633,94 @@ const visible =
 expect(visible).toBeTruthy();
 ```
 
-## Logique
+---
+
+## 8.1 Séquence de vérification
 
 ```text
 Ajouter au panier
+
        ↓
+
 Ouvrir le panier
+
        ↓
+
 Attendre le produit
+
        ↓
+
 Vérifier sa visibilité
+
+       ↓
+
+PASS / FAIL
 ```
 
-> **Bonne pratique :** attendre l'élément avant de vérifier son état.
+> **Bonne pratique :** synchroniser le test avec l’élément nécessaire avant de lire son état.
 
 ---
 
-# 9. Dropdown autocomplete
+# 9. Le dropdown autocomplete
 
 Le choix du pays utilise un **autocomplete dynamique**.
 
-Ce n'est donc pas un simple :
+Ce n’est donc pas nécessairement un simple élément HTML :
 
 ```html
 <select>
 ```
 
-Le test doit :
+Le test doit interagir avec une interface dynamique.
 
-1. saisir quelques caractères ;
-2. attendre les suggestions ;
-3. parcourir les suggestions ;
-4. trouver le pays ;
-5. cliquer dessus.
+La logique est :
+
+```text
+Saisir quelques caractères
+
+        ↓
+
+Attendre les suggestions
+
+        ↓
+
+Parcourir les suggestions
+
+        ↓
+
+Trouver le pays
+
+        ↓
+
+Cliquer
+```
 
 Exemple :
 
 ```javascript
 await page
     .locator("[placeholder*='Country']")
-    .pressSequentially("Fra", { delay: 100 });
+    .pressSequentially(
+        "Fra",
+        { delay: 100 }
+    );
 
-const dropdown = page.locator(".ta-results");
+const dropdown =
+    page.locator(".ta-results");
 
 await dropdown.waitFor();
 
 const optionsCount =
-    await dropdown.locator("button").count();
+    await dropdown
+        .locator("button")
+        .count();
 
 for (let i = 0; i < optionsCount; i++) {
 
     const option =
-        dropdown.locator("button").nth(i);
+        dropdown
+            .locator("button")
+            .nth(i);
 
     const currentOptionName =
         await option.textContent();
@@ -418,19 +736,68 @@ for (let i = 0; i < optionsCount; i++) {
 
 ---
 
+## 9.1 Structure mentale
+
+```text
+Country input
+
+     ↓
+
+"Fra"
+
+     ↓
+
+Autocomplete
+
+     ↓
+
+.ta-results
+
+     ↓
+
+Liste de suggestions
+
+     ↓
+
+for
+
+     ↓
+
+nth(i)
+
+     ↓
+
+textContent()
+
+     ↓
+
+"France"
+
+     ↓
+
+click()
+```
+
+---
+
 # 10. `pressSequentially()` et `delay`
 
-Pour les champs autocomplete, une saisie trop rapide peut parfois poser problème lorsque l'application ou le serveur met du temps à mettre à jour les suggestions.
+Pour certains champs autocomplete, une saisie progressive peut être utile.
 
-On peut utiliser :
+Le test utilise :
 
 ```javascript
 await page
     .locator("[placeholder*='Country']")
-    .pressSequentially("ind", {
-        delay: 150
-    });
+    .pressSequentially(
+        "Fra",
+        {
+            delay: 150
+        }
+    );
 ```
+
+`pressSequentially()` permet de saisir progressivement les caractères.
 
 Avec :
 
@@ -438,33 +805,47 @@ Avec :
 delay: 150
 ```
 
-Playwright introduit un délai entre chaque caractère.
+un délai est introduit entre les caractères.
+
+On peut représenter le fonctionnement ainsi :
 
 ```text
-i
- ↓
+F
+
+↓
+
 attente
- ↓
-n
- ↓
+
+↓
+
+r
+
+↓
+
 attente
- ↓
-d
- ↓
+
+↓
+
+a
+
+↓
+
 attente
- ↓
+
+↓
+
 Suggestions
 ```
 
-Cela laisse davantage de temps à l'application pour mettre à jour le dropdown.
+Cette technique laisse davantage de temps à l’application pour mettre à jour les suggestions.
 
-> **À retenir :** `delay` est une aide de synchronisation utile dans certains contextes d'autocomplete. Ce n'est pas une règle à appliquer partout.
+> **À retenir :** `delay` peut être utile dans certains contextes d’autocomplete dynamique. Il ne doit pas être ajouté systématiquement à toutes les saisies.
 
 ---
 
 # 11. Checkout et assertions
 
-Après avoir sélectionné le pays, on peut continuer vers le checkout.
+Après avoir sélectionné le pays, le scénario continue vers le checkout.
 
 ```javascript
 await page
@@ -472,7 +853,7 @@ await page
     .click();
 ```
 
-On peut ensuite vérifier que l'email affiché correspond à celui utilisé au login :
+On peut ensuite vérifier que l’email affiché correspond à celui utilisé au login :
 
 ```javascript
 await expect(
@@ -482,9 +863,33 @@ await expect(
 ).toHaveText(email);
 ```
 
-Cette assertion permet de vérifier que la donnée transportée entre les étapes est correcte.
+Cette assertion vérifie le transport correct de la donnée entre les étapes.
 
-## Placer la commande
+```text
+Login
+
+  ↓
+
+email
+
+  ↓
+
+Checkout
+
+  ↓
+
+email affiché
+
+  ↓
+
+expect(email)
+```
+
+---
+
+## 11.1 Placer la commande
+
+Le test valide ensuite la commande :
 
 ```javascript
 await page
@@ -492,7 +897,7 @@ await page
     .click();
 ```
 
-Puis vérifier la confirmation :
+Puis il vérifie le message de confirmation :
 
 ```javascript
 await expect(
@@ -502,62 +907,104 @@ await expect(
 );
 ```
 
-Le test valide donc :
+Le scénario valide donc :
 
 ```text
-Login email
-     ↓
 Checkout
-     ↓
-Email affiché
-     ↓
-expect(email)
+
+   ↓
+
+Place Order
+
+   ↓
+
+Confirmation
+
+   ↓
+
+Assertion
+
+   ↓
+
+PASS / FAIL
 ```
 
 ---
 
-# 12. Récupérer l'Order ID
+# 12. Récupérer l’Order ID
 
-Après la commande, on récupère l'identifiant généré dynamiquement :
+Après la création de la commande, l’application génère dynamiquement un **Order ID**.
+
+Le test récupère cette donnée :
 
 ```javascript
 const orderId =
     await page
-        .locator(".em-spacer-1 .ng-star-inserted")
+        .locator(
+            ".em-spacer-1 .ng-star-inserted"
+        )
         .textContent();
 
 console.log(orderId);
 ```
 
-L'**Order ID** devient une donnée importante du scénario.
+Cette donnée est ensuite conservée dans :
 
-On va le conserver afin de pouvoir retrouver exactement cette commande dans l'historique.
-
-```text
-Commande créée
-      ↓
-Capture Order ID
-      ↓
-Stockage dans orderId
-      ↓
-Order History
-      ↓
-Recherche orderId
+```javascript
+orderId
 ```
+
+Elle pourra être utilisée pour retrouver exactement la commande créée.
 
 ---
 
-# 13. Order History : recherche dynamique
+## 12.1 Transport de la donnée
 
-On ouvre l'historique des commandes :
+Le rôle de cette variable est particulièrement important :
+
+```text
+Commande créée
+
+      ↓
+
+Capture Order ID
+
+      ↓
+
+orderId
+
+      ↓
+
+Order History
+
+      ↓
+
+Recherche orderId
+
+      ↓
+
+Détails
+```
+
+Le test devient ainsi capable de suivre une donnée dynamique produite pendant son exécution.
+
+> **Idée clé :** un scénario E2E peut utiliser le résultat d’une étape comme donnée d’entrée pour une étape suivante.
+
+---
+
+# 13. Order History
+
+Le test ouvre ensuite l’historique des commandes :
 
 ```javascript
 await page
-    .locator("button[routerlink*='myorders']")
+    .locator(
+        "button[routerlink*='myorders']"
+    )
     .click();
 ```
 
-On attend ensuite le tableau :
+Il attend ensuite que le tableau soit disponible :
 
 ```javascript
 await page
@@ -565,16 +1012,17 @@ await page
     .waitFor();
 ```
 
-On récupère toutes les lignes :
+Puis il récupère les lignes :
 
 ```javascript
-const orders = page.locator("tbody tr");
+const orders =
+    page.locator("tbody tr");
 
 const ordersCount =
     await orders.count();
 ```
 
-Puis on parcourt les commandes :
+Enfin, il parcourt les commandes :
 
 ```javascript
 for (let i = 0; i < ordersCount; i++) {
@@ -598,33 +1046,71 @@ for (let i = 0; i < ordersCount; i++) {
 }
 ```
 
-## Pattern utilisé
+---
 
-C'est exactement le même principe que pour la recherche du produit :
+## 13.1 Le même pattern que pour les produits
+
+La recherche d’une commande reprend exactement la logique utilisée pour rechercher le produit.
 
 ```text
 Attendre
+
    ↓
+
 Compter
+
    ↓
+
 Parcourir
+
    ↓
+
 Lire
+
    ↓
+
 Comparer
+
    ↓
+
 Agir
+
    ↓
+
 break
 ```
 
-> **Point important :** attendre `tbody` avant d'utiliser `count()` permet de s'assurer que les données du tableau sont disponibles.
+Pour les produits :
+
+```text
+Produits
+  ↓
+Nom
+  ↓
+Comparaison
+  ↓
+Add To Cart
+```
+
+Pour les commandes :
+
+```text
+Commandes
+  ↓
+Order ID
+  ↓
+Comparaison
+  ↓
+View Details
+```
+
+> **Idée clé :** un même pattern Playwright peut être réutilisé sur des données très différentes.
 
 ---
 
-# 14. Vérifier les détails
+# 14. Vérifier les détails de la commande
 
-Une fois les détails de la commande ouverts :
+Une fois les détails de la commande ouverts, le test récupère l’identifiant affiché :
 
 ```javascript
 const orderIdDetails =
@@ -633,7 +1119,7 @@ const orderIdDetails =
         .textContent();
 ```
 
-On vérifie ensuite que l'identifiant correspond à celui capturé précédemment :
+Puis il vérifie que l’identifiant correspond à celui capturé précédemment :
 
 ```javascript
 expect(
@@ -641,32 +1127,75 @@ expect(
 ).toBeTruthy();
 ```
 
-## Objectif de l'assertion
+---
 
-On vérifie que :
+## 14.1 Objectif de l’assertion
+
+Le test vérifie que :
 
 ```text
-Order ID après paiement
-        =
+Order ID après création
+
+          =
+
 Order ID dans les détails
 ```
 
-Cela permet de confirmer que l'on a retrouvé la bonne commande.
+Cela permet de confirmer que la bonne commande a été retrouvée.
+
+Le scénario complet devient :
+
+```text
+Créer une commande
+
+      ↓
+
+Capturer Order ID
+
+      ↓
+
+Ouvrir Order History
+
+      ↓
+
+Chercher Order ID
+
+      ↓
+
+Ouvrir la commande
+
+      ↓
+
+Lire Order ID
+
+      ↓
+
+Comparer
+
+      ↓
+
+PASS / FAIL
+```
 
 ---
 
-# 15. Exemple complet commenté
+# 15. Exemple complet du chapitre
+
+Voici un exemple regroupant les principales notions étudiées.
 
 ```javascript
 import { expect, test } from '@playwright/test';
 
-test("Client App - Complete E2E Order Flow", async ({ page }) => {
+test(
+    "Client App - Complete E2E Order Flow",
+    async ({ page }) => {
 
     const email = "anshika@gmail.com";
     const password = "Iamking@000";
     const productName = "ADIDAS ORIGINAL";
 
     // 1. Login
+
     await page.goto(
         "https://rahulshettyacademy.com/client"
     );
@@ -684,12 +1213,14 @@ test("Client App - Complete E2E Order Flow", async ({ page }) => {
         .click();
 
     // 2. Wait for products
+
     await page
         .locator(".card-body b")
         .first()
         .waitFor();
 
     // 3. Find product dynamically
+
     const products =
         page.locator(".card-body");
 
@@ -720,6 +1251,7 @@ test("Client App - Complete E2E Order Flow", async ({ page }) => {
     }
 
     // 4. Cart
+
     await page
         .locator("[routerLink*='cart']")
         .click();
@@ -736,11 +1268,13 @@ test("Client App - Complete E2E Order Flow", async ({ page }) => {
     ).toBeTruthy();
 
     // 5. Checkout
+
     await page
         .locator("text=Checkout")
         .click();
 
     // 6. Country autocomplete
+
     await page
         .locator("[placeholder*='Country']")
         .pressSequentially(
@@ -777,13 +1311,17 @@ test("Client App - Complete E2E Order Flow", async ({ page }) => {
     }
 
     // 7. Validate checkout data
+
     await expect(
         page
-            .locator(".user__name [type='text']")
+            .locator(
+                ".user__name [type='text']"
+            )
             .first()
     ).toHaveText(email);
 
     // 8. Place order
+
     await page
         .locator(".action__submit")
         .click();
@@ -795,6 +1333,7 @@ test("Client App - Complete E2E Order Flow", async ({ page }) => {
     );
 
     // 9. Capture Order ID
+
     const orderId =
         await page
             .locator(
@@ -802,9 +1341,13 @@ test("Client App - Complete E2E Order Flow", async ({ page }) => {
             )
             .textContent();
 
-    console.log("Order ID:", orderId);
+    console.log(
+        "Order ID:",
+        orderId
+    );
 
     // 10. Open Order History
+
     await page
         .locator(
             "button[routerlink*='myorders']"
@@ -816,6 +1359,7 @@ test("Client App - Complete E2E Order Flow", async ({ page }) => {
         .waitFor();
 
     // 11. Find the order dynamically
+
     const orders =
         page.locator("tbody tr");
 
@@ -843,6 +1387,7 @@ test("Client App - Complete E2E Order Flow", async ({ page }) => {
     }
 
     // 12. Validate details
+
     const details =
         await page
             .locator(".col-text")
@@ -851,6 +1396,7 @@ test("Client App - Complete E2E Order Flow", async ({ page }) => {
     expect(
         orderId.includes(details)
     ).toBeTruthy();
+
 });
 ```
 
@@ -863,21 +1409,22 @@ test("Client App - Complete E2E Order Flow", async ({ page }) => {
 | `locator()`           | `#userEmail`, `.card-body`, `tbody tr` | Identifier des éléments       |
 | `waitFor()`           | `.card-body b`, `.ta-results`, `tbody` | Synchroniser                  |
 | `count()`             | Produits, options, commandes           | Compter une collection        |
-| `nth()`               | Produit/option/ligne courant           | Accéder à un élément          |
-| `first()`             | Premier élément                        | Sélectionner le premier       |
+| `nth()`               | Produit, option, ligne courante        | Accéder à un élément          |
+| `first()`             | Premier produit / premier bouton       | Sélectionner le premier       |
 | `textContent()`       | Nom, pays, Order ID                    | Lire du texte                 |
 | `isVisible()`         | Produit dans le panier                 | Lire un état                  |
-| `expect()`            | Checkout, confirmation, détails        | Valider                       |
-| `getByRole()`         | Add To Cart                            | Locator orienté accessibilité |
-| `pressSequentially()` | Country                                | Saisie progressive            |
-| `fill()`              | Email/password                         | Remplir un champ              |
+| `expect()`            | Checkout, confirmation, détails        | Vérifier un résultat          |
+| `getByRole()`         | `Add To Cart`                          | Locator orienté accessibilité |
+| `fill()`              | Email / password                       | Remplir un champ              |
 | `click()`             | Login, panier, checkout                | Effectuer une action          |
+| `pressSequentially()` | Country                                | Saisie progressive            |
+| `includes()`          | Produit / Order ID                     | Comparer du contenu           |
 
 ---
 
-## 16.1 Pattern réutilisable
+# 17. Pattern : parcourir une collection dynamique
 
-Ce pattern est très important pour l'automatisation de collections dynamiques :
+Un des patterns les plus importants du chapitre est le parcours d’une collection dynamique.
 
 ```javascript
 const items =
@@ -900,7 +1447,11 @@ for (let i = 0; i < count; i++) {
             .locator("...")
             .textContent();
 
-    if (text.includes("valeur recherchée")) {
+    if (
+        text.includes(
+            "valeur recherchée"
+        )
+    ) {
 
         await item
             .locator("button")
@@ -911,29 +1462,47 @@ for (let i = 0; i < count; i++) {
 }
 ```
 
-## Pattern mental
+---
+
+## 17.1 Pattern mental
 
 ```text
 Collection
+
     ↓
+
 waitFor()
+
     ↓
+
 count()
+
     ↓
+
 for
+
     ↓
+
 nth(i)
+
     ↓
+
 textContent()
+
     ↓
+
 includes()
+
     ↓
+
 click()
+
     ↓
+
 break
 ```
 
-Ce pattern peut être réutilisé pour :
+Ce pattern peut être utilisé pour :
 
 * des produits ;
 * des pays ;
@@ -944,63 +1513,117 @@ Ce pattern peut être réutilisé pour :
 
 ---
 
-# 17. Erreurs fréquentes et bonnes pratiques
+## 17.2 Deux exemples du chapitre
 
-## 1. Produit à position fixe
+### Recherche d’un produit
+
+```text
+.card-body
+
+   ↓
+
+Nom du produit
+
+   ↓
+
+ADIDAS ORIGINAL
+
+   ↓
+
+Add To Cart
+```
+
+### Recherche d’une commande
+
+```text
+tbody tr
+
+   ↓
+
+Order ID
+
+   ↓
+
+Order ID recherché
+
+   ↓
+
+View Details
+```
+
+Le mécanisme est identique.
+
+---
+
+# 18. Erreurs et points d’attention
+
+> **Complément pédagogique :** cette section rassemble des points pratiques permettant d’éviter certaines erreurs fréquentes lors de l’écriture de scénarios E2E.
+
+---
+
+## 18.1 Dépendre d’une position fixe
 
 ### ❌ Fragile
 
 ```javascript
-await products.nth(0).click();
+await products
+    .nth(0)
+    .click();
 ```
 
-Le produit pourrait changer de position.
+Le produit peut changer de position.
 
 ### ✅ Préférer
 
-Rechercher le produit par son nom.
+Rechercher le produit selon son nom :
 
 ```javascript
 if (name.includes(productName)) {
+
     // ...
+
 }
 ```
 
 ---
 
-## 2. Mauvais bouton `Add To Cart`
+## 18.2 Chercher globalement `Add To Cart`
 
-Éviter de chercher globalement :
-
-```javascript
-page.getByRole("button", {
-    name: "Add To Cart"
-});
-```
-
-Plusieurs produits peuvent avoir ce bouton.
-
-Préférer :
+### ❌ Risqué
 
 ```javascript
-product.getByRole("button", {
-    name: "Add To Cart"
-});
+page.getByRole(
+    "button",
+    { name: "Add To Cart" }
+);
 ```
 
-Le bouton est ainsi recherché **à l'intérieur du produit courant**.
+Plusieurs produits peuvent posséder ce bouton.
+
+### ✅ Préférer
+
+```javascript
+product.getByRole(
+    "button",
+    { name: "Add To Cart" }
+);
+```
+
+Le bouton est alors recherché dans le contexte du produit courant.
 
 ---
 
-## 3. Attentes arbitraires
+## 18.3 Utiliser des attentes arbitraires
 
-Éviter autant que possible les attentes artificielles :
+Éviter autant que possible :
 
 ```javascript
 await page.waitForTimeout(5000);
 ```
 
-Préférer une attente liée à un élément ou à un état utile :
+Une attente de durée fixe ne garantit pas que la condition nécessaire soit réellement satisfaite.
+
+Préférer une attente liée à un élément utile :
 
 ```javascript
 await page
@@ -1011,34 +1634,48 @@ await page
 
 ---
 
-## 4. Traiter un autocomplete comme un `<select>`
+## 18.4 Traiter un autocomplete comme un `<select>`
 
-Un autocomplete dynamique n'est pas nécessairement un `<select>`.
+Un autocomplete dynamique n'est pas nécessairement un :
+
+```html
+<select>
+```
 
 Il faut généralement :
 
 ```text
 Saisir
+
   ↓
+
 Attendre les suggestions
+
   ↓
+
 Parcourir les options
+
   ↓
+
 Trouver l'option
+
   ↓
+
 Cliquer
 ```
 
 ---
 
-## 5. Saisie trop rapide
+## 18.5 Saisie trop rapide
 
-Si l'application ne suit pas la saisie :
+Si l'application ne suit pas correctement la saisie :
 
 ```javascript
 await locator.pressSequentially(
     "Fra",
-    { delay: 150 }
+    {
+        delay: 150
+    }
 );
 ```
 
@@ -1046,11 +1683,13 @@ Mais `delay` ne doit pas être utilisé systématiquement.
 
 ---
 
-## 6. Ne pas ajouter d'assertions
+## 18.6 Ne pas ajouter d’assertions
 
-Après les actions importantes, vérifier le résultat.
+Une action réussie ne signifie pas nécessairement que le résultat attendu est correct.
 
-Exemple :
+Après une étape importante, ajouter une vérification.
+
+Par exemple :
 
 ```javascript
 await expect(
@@ -1062,9 +1701,9 @@ await expect(
 
 ---
 
-## 7. Perdre l'Order ID
+## 18.7 Perdre l’Order ID
 
-L'Order ID doit être conservé dans une variable :
+L’identifiant doit être conservé :
 
 ```javascript
 const orderId =
@@ -1074,14 +1713,18 @@ const orderId =
 Puis réutilisé :
 
 ```javascript
-if (orderId.includes(currentOrderId)) {
+if (
+    orderId.includes(currentOrderId)
+) {
+
     // ...
+
 }
 ```
 
 ---
 
-## 8. Order History non synchronisé
+## 18.8 Parcourir Order History trop tôt
 
 Avant de parcourir les commandes :
 
@@ -1091,7 +1734,7 @@ await page
     .waitFor();
 ```
 
-Puis seulement :
+Puis :
 
 ```javascript
 const orders =
@@ -1101,24 +1744,119 @@ const count =
     await orders.count();
 ```
 
----
-
-# 18. Exercices
-
-1. Remplacer `ADIDAS ORIGINAL` par `ZARA COAT 3`.
-2. Afficher tous les titres avec `allTextContents()`.
-3. Ajouter une assertion confirmant la présence du produit dans le panier.
-4. Tester un autre pays dans l'autocomplete.
-5. Comparer plusieurs valeurs de `delay`.
-6. Vérifier que l'email du checkout est identique à celui du login.
-7. Capturer et afficher l'Order ID.
-8. Rechercher la commande dynamiquement dans Order History.
-9. Ouvrir les détails de la bonne commande.
-10. Ajouter une assertion finale sur l'Order ID.
+Cela permet de synchroniser le test avec la présence du tableau.
 
 ---
 
-# 19. Fiche mémo
+# 19. Exercices conseillés
+
+## Exercice 1 — Changer de produit
+
+Remplacer :
+
+```javascript
+const productName =
+    "ADIDAS ORIGINAL";
+```
+
+par :
+
+```javascript
+const productName =
+    "ZARA COAT 3";
+```
+
+Observer si la recherche dynamique fonctionne toujours.
+
+---
+
+## Exercice 2 — Afficher tous les produits
+
+Utiliser :
+
+```javascript
+allTextContents()
+```
+
+pour afficher les noms des produits.
+
+---
+
+## Exercice 3 — Vérifier le panier
+
+Ajouter une assertion confirmant que le produit sélectionné est bien présent dans le panier.
+
+---
+
+## Exercice 4 — Tester un autre pays
+
+Modifier le pays recherché dans l’autocomplete.
+
+Par exemple :
+
+```text
+France
+```
+
+vers un autre pays disponible.
+
+---
+
+## Exercice 5 — Modifier `delay`
+
+Tester plusieurs valeurs :
+
+```javascript
+delay: 50
+```
+
+```javascript
+delay: 100
+```
+
+```javascript
+delay: 150
+```
+
+Observer le comportement de l’autocomplete.
+
+---
+
+## Exercice 6 — Vérifier l’email
+
+Vérifier que l’email affiché au checkout correspond exactement à celui utilisé lors du login.
+
+---
+
+## Exercice 7 — Capturer l’Order ID
+
+Afficher l’Order ID dans la console :
+
+```javascript
+console.log(orderId);
+```
+
+---
+
+## Exercice 8 — Rechercher une commande
+
+Parcourir Order History et retrouver dynamiquement la commande créée.
+
+---
+
+## Exercice 9 — Ouvrir les détails
+
+Après avoir trouvé la bonne ligne, ouvrir les détails de la commande.
+
+---
+
+## Exercice 10 — Assertion finale
+
+Vérifier que l’Order ID affiché dans les détails correspond à celui capturé après la création de la commande.
+
+---
+
+# 20. Mémo des concepts
 
 | Objectif        | Syntaxe                                                 |
 | --------------- | ------------------------------------------------------- |
@@ -1140,102 +1878,344 @@ const count =
 
 ---
 
-# 20. Checklist de validation
+# 21. Checklist d’apprentissage
 
-* [ ] Je sais construire un workflow E2E.
+* [ ] Je sais construire un workflow End-to-End.
+* [ ] Je sais gérer un login avec la fixture `page`.
+* [ ] Je sais conserver une donnée dans une variable.
 * [ ] Je sais attendre le chargement des produits.
-* [ ] Je comprends `count()` et `nth()`.
-* [ ] Je sais parcourir une liste avec `for`.
+* [ ] Je comprends `count()`.
+* [ ] Je comprends `nth()`.
+* [ ] Je sais parcourir une collection avec `for`.
 * [ ] Je sais rechercher un produit par son nom.
 * [ ] Je sais limiter un bouton au produit courant.
-* [ ] Je sais vérifier le panier.
-* [ ] Je comprends le fonctionnement d'un autocomplete dynamique.
+* [ ] Je sais ajouter un produit au panier.
+* [ ] Je sais vérifier la présence du produit dans le panier.
+* [ ] Je comprends le fonctionnement d’un autocomplete dynamique.
 * [ ] Je sais utiliser `pressSequentially()`.
 * [ ] Je comprends le rôle de `delay`.
-* [ ] Je sais conserver une donnée dynamique.
+* [ ] Je sais ajouter des assertions au checkout.
+* [ ] Je sais récupérer une donnée générée dynamiquement.
 * [ ] Je sais récupérer un Order ID.
-* [ ] Je sais parcourir une table.
-* [ ] Je sais retrouver une ligne par son identifiant.
-* [ ] Je sais vérifier les détails d'une commande.
+* [ ] Je sais parcourir une table de commandes.
+* [ ] Je sais retrouver une ligne grâce à son identifiant.
+* [ ] Je sais ouvrir les détails d’une commande.
+* [ ] Je sais vérifier l’Order ID final.
+* [ ] Je comprends le pattern `waitFor → count → for → nth → textContent → comparaison → action`.
 
 ---
 
-# Conclusion
+# 22. Résumé final
 
-Ce chapitre marque le passage vers une véritable **automatisation End-to-End**.
+Ce chapitre marque le passage d’un test Playwright simple vers un véritable **workflow End-to-End**.
 
-Le test ne vérifie plus une action isolée : il transporte des données d'une étape à l'autre, recherche dynamiquement des éléments et valide le résultat final.
+Le test ne vérifie plus une seule page ou une seule action.
 
-Les deux patterns les plus importants à retenir sont :
+Il reproduit un parcours complet :
+
+```text
+Login
+
+  ↓
+
+Produits
+
+  ↓
+
+Recherche dynamique
+
+  ↓
+
+Panier
+
+  ↓
+
+Checkout
+
+  ↓
+
+Autocomplete
+
+  ↓
+
+Commande
+
+  ↓
+
+Order ID
+
+  ↓
+
+Order History
+
+  ↓
+
+Détails
+
+  ↓
+
+Assertion finale
+```
+
+---
+
+## 🧠 Le modèle mental du chapitre
+
+```text
+                     PLAYWRIGHT
+                          │
+                          ▼
+                    TEST E2E
+                          │
+                          ▼
+                        LOGIN
+                          │
+                          ▼
+                   LOAD PRODUCTS
+                          │
+                          ▼
+                COLLECTION DYNAMIQUE
+                          │
+                          ▼
+                 count() + nth()
+                          │
+                          ▼
+                  RECHERCHE PRODUIT
+                          │
+                          ▼
+                    Add To Cart
+                          │
+                          ▼
+                       CART
+                          │
+                          ▼
+                     CHECKOUT
+                          │
+                          ▼
+                    AUTOCOMPLETE
+                          │
+                          ▼
+                      COUNTRY
+                          │
+                          ▼
+                    PLACE ORDER
+                          │
+                          ▼
+                    ORDER ID
+                          │
+                          ▼
+                   ORDER HISTORY
+                          │
+                          ▼
+                 RECHERCHE DYNAMIQUE
+                          │
+                          ▼
+                      DETAILS
+                          │
+                          ▼
+                     ASSERTION
+                          │
+                    ┌─────┴─────┐
+                    ▼           ▼
+                  PASS         FAIL
+```
+
+---
+
+## 🎯 Les 5 notions prioritaires
+
+| # | Notion                     | À retenir                                                                  |
+| - | -------------------------- | -------------------------------------------------------------------------- |
+| 1 | **Workflow E2E**           | Un test peut reproduire un parcours utilisateur complet                    |
+| 2 | **Collections dynamiques** | `count()` + `nth()` + boucle permettent de parcourir des éléments          |
+| 3 | **Synchronisation**        | `waitFor()` permet d’attendre qu’un élément nécessaire soit disponible     |
+| 4 | **Données transportées**   | Les variables permettent de réutiliser des données entre les étapes        |
+| 5 | **Assertions**             | `expect()` permet de vérifier que les résultats correspondent aux attentes |
+
+---
+
+## 🚀 Les deux patterns à mémoriser
 
 ### 1. Recherche dynamique dans une collection
 
 ```text
 Collection
+
     ↓
+
+waitFor()
+
+    ↓
+
 count()
+
     ↓
+
 for
+
     ↓
+
 nth(i)
+
     ↓
+
 textContent()
+
     ↓
+
 Comparaison
+
     ↓
+
 Action
+
+    ↓
+
+break
 ```
 
-### 2. Synchronisation avec les interfaces dynamiques
+Ce pattern est utilisé pour :
+
+* les produits ;
+* les pays ;
+* les commandes ;
+* les lignes de tableau ;
+* les options de dropdown.
+
+---
+
+### 2. Synchronisation avec une interface dynamique
 
 ```text
 Action
+
   ↓
-Attendre l'élément nécessaire
+
+Attendre l’élément nécessaire
+
   ↓
+
 Lire / interagir
+
   ↓
+
 Assertion
 ```
 
-## Vue globale du scénario
+L’objectif est d’éviter que le test continue alors que l’application n’est pas encore prête.
+
+---
+
+## 🔄 Transport des données dans un scénario E2E
+
+Une autre notion fondamentale du chapitre est la circulation des données :
 
 ```text
-Login
+LOGIN
+
   ↓
-Wait for products
-  ↓
-Find product dynamically
-  ↓
-Add to cart
-  ↓
-Verify cart
-  ↓
-Checkout
-  ↓
-Autocomplete country
-  ↓
-Validate checkout
-  ↓
-Place order
-  ↓
-Capture Order ID
-  ↓
-Order History
-  ↓
-Find order dynamically
-  ↓
-Verify details
+
+email
+  │
+  └───────────────┐
+                  ▼
+              CHECKOUT
+                  │
+                  ▼
+             PLACE ORDER
+                  │
+                  ▼
+              orderId
+                  │
+                  ▼
+           ORDER HISTORY
+                  │
+                  ▼
+          SEARCH orderId
+                  │
+                  ▼
+              DETAILS
+                  │
+                  ▼
+          VERIFY orderId
 ```
 
-### Les notions essentielles du chapitre
+Le scénario devient ainsi **contextuel** : chaque étape s’appuie sur les informations produites précédemment.
 
-> **`count()` + `nth()` + boucle `for`** permettent de parcourir une collection dynamique.
+---
 
-> **`waitFor()`** permet de synchroniser le test avec l'apparition d'éléments nécessaires.
+# 23. Transition vers le chapitre suivant
 
-> **`pressSequentially()` + `delay`** sont utiles pour les champs autocomplete dynamiques.
+Le Chapitre 4 a permis de passer d’actions isolées à un **scénario End-to-End complet**.
 
-> **Les variables permettent de transporter les données** d'une étape du scénario à une autre.
+Nous savons maintenant :
 
-> **Les assertions** permettent de vérifier que chaque étape importante produit le résultat attendu.
+```text
+Créer un scénario
+
+      ↓
+
+Naviguer
+
+      ↓
+
+Interagir
+
+      ↓
+
+Parcourir des collections
+
+      ↓
+
+Synchroniser
+
+      ↓
+
+Transporter des données
+
+      ↓
+
+Créer une commande
+
+      ↓
+
+Retrouver une donnée dynamique
+
+      ↓
+
+Vérifier le résultat final
+```
+
+La question suivante devient alors :
+
+```text
+Notre scénario fonctionne...
+
+        ↓
+
+Comment le rendre plus robuste ?
+
+        ↓
+
+Comment éviter de répéter le même code ?
+
+        ↓
+
+Comment organiser les données ?
+
+        ↓
+
+Comment réutiliser les actions ?
+
+        ↓
+
+Comment créer des fonctions et des Page Objects ?
+
+        ↓
+
+Comment rendre les tests maintenables ?
+```
+
+C’est ici qu’interviennent les notions des chapitres suivants autour de la **réutilisation, de la structuration et de la maintenabilité des tests Playwright**.
+
+> **Idée centrale du chapitre :** un test End-to-End efficace ne consiste pas simplement à enchaîner des `click()` et des `fill()`. Il doit savoir **attendre, rechercher dynamiquement, transporter des données, agir sur le bon élément et vérifier les résultats**. Les patterns `count()` + `nth()` + boucle, la synchronisation et les assertions constituent les fondations de scénarios E2E plus réalistes.
