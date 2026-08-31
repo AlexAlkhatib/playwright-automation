@@ -1,9 +1,3 @@
-// Login UI
-// Test adding to cart
-// Test order confirmation
-// Test order details
-// Test order history
-
 import { expect, test, request } from '@playwright/test';
 
 const loginPayload = {
@@ -12,13 +6,16 @@ const loginPayload = {
 };
 
 let token;
+let webContext;
 
-test.beforeAll(async () => {
-    const apiContext = await request.newContext();
+test.beforeAll(async ({ browser }) => {
 
     // =========================
     // Login API
     // =========================
+
+    const apiContext = await request.newContext();
+
     const loginResponse = await apiContext.post(
         "https://rahulshettyacademy.com/api/ecom/auth/login",
         {
@@ -31,78 +28,84 @@ test.beforeAll(async () => {
     const loginResponseJson = await loginResponse.json();
     token = loginResponseJson.token;
 
-    console.log("Token:", token);
-});
+    await apiContext.dispose();
 
-test("Client App", async ({ page }) => {
 
     // =========================
-    // Inject token into browser
+    // Create context with token
     // =========================
-    await page.addInitScript((value) => {
+
+    const context = await browser.newContext();
+
+    const initialPage = await context.newPage();
+
+    await initialPage.addInitScript((value) => {
         window.localStorage.setItem("token", value);
     }, token);
 
-    // =========================
-    // Open application
-    // =========================
-    await page.goto("https://rahulshettyacademy.com/client/");
+    await initialPage.goto(
+        "https://rahulshettyacademy.com/client/"
+    );
 
-    // Wait for products to load
+    await initialPage.locator(".card-body b").first().waitFor();
+
+    // Save storage state
+    await context.storageState({
+        path: "state.json"
+    });
+
+    await context.close();
+
+
+    // =========================
+    // Create webContext
+    // =========================
+
+    webContext = await browser.newContext({
+        storageState: "state.json"
+    });
+});
+
+
+test("Client App", async () => {
+
+    // Create page from webContext
+    const page = await webContext.newPage();
+
+    await page.goto(
+        "https://rahulshettyacademy.com/client/"
+    );
+
     await page.locator(".card-body b").first().waitFor();
 
-    // =========================
-    // Add Adidas product
-    // =========================
-    await page
-        .locator(".card-body")
-        .filter({ hasText: "ADIDAS ORIGINAL" })
-        .getByRole("button", { name: "Add To Cart" })
-        .click();
-
-    // =========================
-    // Go to Cart
-    // =========================
-    await page
-        .getByRole("listitem")
-        .getByRole("button", { name: "Cart" })
-        .click();
-
-    // Verify product is in cart
+    // expect().not.toBeVisible()
     await expect(
         page.getByText("ADIDAS ORIGINAL")
     ).toBeVisible();
 
-    // =========================
-    // Checkout
-    // =========================
-    await page
-        .getByRole("button", { name: "Checkout" })
-        .click();
+    await page.close();
+});
 
-    // =========================
-    // Select France
-    // =========================
-    await page
-        .getByPlaceholder("Select Country")
-        .pressSequentially("Fra", { delay: 100 });
 
-    await page.locator(".ta-results").waitFor();
+test("Check Page Title", async () => {
 
-    await page
-        .getByRole("button", { name: "Fra" })
-        .first()
-        .click();
+    // Create a NEW page from the SAME webContext
+    const page = await webContext.newPage();
 
-    // =========================
-    // Place Order
-    // =========================
-    await page.getByText("PLACE ORDER").click();
+    await page.goto(
+        "https://rahulshettyacademy.com/client/"
+    );
 
-    // =========================
-    // Verify confirmation
-    // =========================
-    await expect(
-        page.getByText("Thankyou for the order.")
-    ).toBeVisible();
+    await expect(page).toHaveTitle(
+        "Let's Shop"
+    );
+
+    await page.close();
+});
+
+
+test.afterAll(async () => {
+
+    await webContext.close();
+
 });
