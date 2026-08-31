@@ -27,6 +27,6 @@ export default defineConfig({
     screenshot: 'on',
 
     // Collect a trace only when a test fail.
-    trace: 'retain-on-failure',
+    trace: 'on',
   },
 });
