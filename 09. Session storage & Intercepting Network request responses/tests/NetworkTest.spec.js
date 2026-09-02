@@ -12,6 +12,10 @@ test('@QW Security test request intercept', async ({ page }) => {
 
     // Go to "My orders"
     await page.locator("button[routerlink*='myorders']").click();
+
+    // Stop the call of CSS from reaching the browser
+    page.route("**/*.css", route => route.abort());
+
     // Change the route of the first order with this given new id
     await page.route("https://rahulshettyacademy.com/api/ecom/order/get-orders-details?id=*",
         route => route.continue({ url: 'https://rahulshettyacademy.com/api/ecom/order/get-orders-details?id=621661f884b053f6765465b6' })
