@@ -19,3 +19,11 @@ test("Screenshot & Visual Comparision", async ({page}) => {
     // assert that the text field is hidden
     await expect(page.locator("#displayed-text")).toBeHidden();
 });
+
+test("Visual Testing", async ({page}) => {
+    // go to the webiste
+    await page.goto("https://www.rediff.com/");
+
+    // expect the current screenshot to match the existing screenshot
+    expect(await page.screenshot()).toMatchSnapshot("landing.png");
+});
